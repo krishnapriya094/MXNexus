@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "793562980370",
+    "project_id": "mxnexus-d24c9",
+    "storage_bucket": "mxnexus-d24c9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:793562980370:android:1012a4c3122e65d11878cb",
+        "android_client_info": {
+          "package_name": "com.example.mxnexus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAev7XX9nkvgqhgmO2ajzBY1fBshVabPgU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

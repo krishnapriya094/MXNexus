@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Force light theme even in night mode for UI consistency -->
+    <style name="Base.Theme.MXNexus" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/surface</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColorPrimary">#1A1A2E</item>
+    </style>
+</resources>
