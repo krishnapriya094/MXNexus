@@ -4,15 +4,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
 
-    <!-- Top App Bar -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="0dp"
-        app:elevation="0dp">
+        app:elevation="0dp"
+        android:background="#FFFFFF">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -22,17 +23,19 @@
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingEnd="16dp">
+                android:layout_height="match_parent">
 
                 <ImageView
-                    android:id="@+id/btnMenu"
+                    android:id="@+id/btnToolbarNotifications"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
-                    android:src="@android:drawable/ic_menu_sort_by_size"
-                    app:tint="#333333" />
+                    android:src="@drawable/ic_notification"
+                    app:tint="@color/primary"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -43,45 +46,29 @@
                     android:textSize="18sp"
                     android:textColor="#FF00CC"
                     android:letterSpacing="0.1" />
-
-                <RelativeLayout
-                    android:id="@+id/btnNotifications"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@drawable/ic_notification"
-                        app:tint="#333333" />
-
-                    <TextView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:background="@drawable/circle_avatar"
-                        android:backgroundTint="#FF5252"
-                        android:text="3"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:gravity="center"
-                        android:layout_alignParentEnd="true"
-                        android:layout_marginTop="-2dp"
-                        android:layout_marginEnd="-2dp" />
-                </RelativeLayout>
+                
+                <View
+                    android:id="@+id/notificationBadge"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_toEndOf="@id/btnToolbarNotifications"
+                    android:layout_alignTop="@id/btnToolbarNotifications"
+                    android:layout_marginStart="-8dp"
+                    android:background="@drawable/badge_circle"
+                    android:visibility="gone" />
 
             </RelativeLayout>
+
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="72dp"
         android:layout_alignParentBottom="true"
         android:background="#FFFFFF"
+        android:paddingBottom="4dp"
         app:elevation="16dp"
         app:menu="@menu/bottom_nav_menu"
         app:itemIconTint="@color/primary"
@@ -90,7 +77,6 @@
         app:itemRippleColor="#F3E5F5"
         app:itemActiveIndicatorStyle="@null" />
 
-    <!-- Fragment Container (Middle Content) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/navHostFragment"
         android:name="androidx.navigation.fragment.NavHostFragment"

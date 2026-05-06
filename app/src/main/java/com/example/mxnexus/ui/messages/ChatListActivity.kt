@@ -2,97 +2,134 @@ package com.example.mxnexus.ui.messages
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.example.mxnexus.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 
+
+/**
+ * Standalone activity version of the Messages inbox.
+ * Used when navigating here from outside the main nav graph
+ * (e.g., deep links, push notification taps).
+ *
+ * Uses [ChatPreviewAdapter] with [item_chat_preview] layout —
+ * same adapter as MessagesFragment so there is a single source of truth.
+ */
 class ChatListActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "ChatListActivity"
+    }
 
     private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
     private lateinit var rvChats: RecyclerView
+    private lateinit var emptyLayout: LinearLayout
+    private lateinit var tvEmptyMessage: TextView
+
     private val chatList = mutableListOf<Map<String, Any>>()
-    private lateinit var adapter: ChatListAdapter
+    private lateinit var adapter: ChatPreviewAdapter
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_chat_list)
+        try {
+            setContentView(R.layout.activity_chat_list)
+            initViews()
+            startListening()
+        } catch (e: Exception) {
+            Log.e(TAG, "onCreate error", e)
+            finish()
+        }
+    }
 
-        db = FirebaseFirestore.getInstance()
+    // ── Setup ──────────────────────────────────────────────────────────────────
+
+    private fun initViews() {
+        val toolbar = findViewById<Toolbar>(R.id.chatListToolbar)
+        toolbar?.let {
+            setSupportActionBar(it)
+            it.setNavigationOnClickListener { finish() }
+        }
+
+        db   = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
-        rvChats = findViewById(R.id.rvChatList)
-        rvChats.layoutManager = LinearLayoutManager(this)
+        rvChats       = findViewById(R.id.rvChatList)
+        emptyLayout   = findViewById(R.id.emptyStateLayout)
+        tvEmptyMessage = findViewById(R.id.tvChatListEmpty)
 
-        loadChatList()
+        rvChats.layoutManager = LinearLayoutManager(this)
     }
 
-    private fun loadChatList() {
-        val uid = auth.currentUser?.uid ?: return
+    private fun startListening() {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            showEmpty("Sign in to view your messages")
+            return
+        }
+
+        adapter = ChatPreviewAdapter(chatList, uid, db) { receiverId, name ->
+            startActivity(
+                Intent(this, ChatActivity::class.java)
+                    .putExtra("receiverId", receiverId)
+                    .putExtra("receiverName", name)
+            )
+        }
+        rvChats.adapter = adapter
+        loadChatList(uid)
+    }
+
+    // ── Data ───────────────────────────────────────────────────────────────────
+
+    private fun loadChatList(uid: String) {
         db.collection("chats")
             .whereArrayContains("users", uid)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
-                if (snapshot != null) {
-                    chatList.clear()
-                    for (doc in snapshot.documents) {
-                        val data = doc.data ?: continue
-                        chatList.add(data + ("id" to doc.id))
-                    }
-                    adapter = ChatListAdapter(chatList, uid, db) { receiverId, name ->
-                        val intent = Intent(this, ChatActivity::class.java)
-                        intent.putExtra("receiverId", receiverId)
-                        intent.putExtra("receiverName", name)
-                        startActivity(intent)
-                    }
-                    rvChats.adapter = adapter
+            .addSnapshotListener { snapshot, error ->
+                if (isDestroyed || isFinishing) return@addSnapshotListener
+
+                if (error != null) {
+                    Log.e(TAG, "Firestore error loading chats", error)
+                    showEmpty("Could not load messages.\nCheck your connection.")
+                    return@addSnapshotListener
                 }
+
+                chatList.clear()
+                snapshot?.documents?.forEach { doc ->
+                    val data = doc.data ?: return@forEach
+                    chatList.add(data + ("id" to doc.id))
+                }
+                // Sort in-memory — no composite index needed
+                chatList.sortByDescending { (it["timestamp"] as? Long) ?: 0L }
+
+                if (chatList.isEmpty()) {
+                    showEmpty("No messages yet.\nStart a conversation from someone's profile!")
+                } else {
+                    showList()
+                }
+                if (::adapter.isInitialized) adapter.notifyDataSetChanged()
             }
     }
 
-    class ChatListAdapter(
-        private val list: List<Map<String, Any>>,
-        private val currentUid: String,
-        private val db: FirebaseFirestore,
-        private val onClick: (String, String) -> Unit
-    ) : RecyclerView.Adapter<ChatListAdapter.ViewHolder>() {
+    // ── UI helpers ─────────────────────────────────────────────────────────────
 
-        class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-            val name: TextView = v.findViewById(android.R.id.text1)
-            val lastMsg: TextView = v.findViewById(android.R.id.text2)
-            val avatar: ImageView = v.findViewById(android.R.id.icon) // Assuming standard list item with icon
-        }
+    private fun showEmpty(message: String) {
+        rvChats.visibility      = View.GONE
+        emptyLayout.visibility  = View.VISIBLE
+        tvEmptyMessage.text     = message
+    }
 
-        override fun onCreateViewHolder(p: ViewGroup, t: Int) = ViewHolder(
-            LayoutInflater.from(p.context).inflate(R.layout.item_user_admin, p, false) 
-            // Reusing item_user_admin layout as it has Name, Email(Message) and structure we need
-        )
-
-        override fun onBindViewHolder(h: ViewHolder, p: Int) {
-            val chat = list[p]
-            val users = chat["users"] as? List<String> ?: emptyList()
-            val receiverId = users.find { it != currentUid } ?: ""
-
-            // Dynamically fetch user details to show Name instead of ID
-            db.collection("users").document(receiverId).get().addOnSuccessListener { doc ->
-                val name = doc.getString("name") ?: "User"
-                h.name.text = name
-                h.itemView.setOnClickListener { onClick(receiverId, name) }
-            }
-            
-            h.lastMsg.text = chat["lastMessage"]?.toString() ?: "No messages"
-        }
-
-        override fun getItemCount() = list.size
+    private fun showList() {
+        rvChats.visibility      = View.VISIBLE
+        emptyLayout.visibility  = View.GONE
     }
 }

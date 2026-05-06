@@ -20,9 +20,9 @@
         android:label="Queries"/>
 
     <fragment
-        android:id="@+id/notificationsFragment"
-        android:name="com.example.mxnexus.ui.notifications.NotificationsFragment"
-        android:label="Notifications"/>
+        android:id="@+id/chatListActivity"
+        android:name="com.example.mxnexus.ui.messages.MessagesFragment"
+        android:label="Messages"/>
 
     <fragment
         android:id="@+id/profileFragment"

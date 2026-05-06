@@ -3,7 +3,6 @@ package com.example.mxnexus.ui.notifications;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,27 +41,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.tvMessage.setText(notification.getMessage());
         holder.tvTime.setText(getRelativeTime(notification.getTimestamp()));
 
-        // Set icons based on notification type
-        if (notification.getType() != null) {
-            switch (notification.getType().toLowerCase()) {
-                case "like":
-                    holder.ivIcon.setImageResource(R.drawable.ic_like_filled);
-                    break;
-                case "comment":
-                    holder.ivIcon.setImageResource(R.drawable.ic_comment);
-                    break;
-                case "follow":
-                    holder.ivIcon.setImageResource(R.drawable.ic_profile);
-                    break;
-                case "mention":
-                    holder.ivIcon.setImageResource(R.drawable.ic_query);
-                    break;
-                default:
-                    holder.ivIcon.setImageResource(R.drawable.ic_notification);
-                    break;
-            }
+        // Set avatar initial based on sender name
+        String senderName = notification.getSenderName();
+        if (senderName != null && !senderName.isEmpty()) {
+            holder.tvInitial.setText(String.valueOf(senderName.charAt(0)).toUpperCase());
         } else {
-            holder.ivIcon.setImageResource(R.drawable.ic_notification);
+            holder.tvInitial.setText("?");
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -97,14 +81,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     static class NotificationViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivIcon;
-        TextView tvMessage, tvTime;
+        TextView tvInitial, tvMessage, tvTime;
 
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivIcon = itemView.findViewById(R.id.ivNotificationIcon);
+            tvInitial = itemView.findViewById(R.id.tvNotifInitial);
             tvMessage = itemView.findViewById(R.id.tvNotificationMessage);
-            tvTime = itemView.findViewById(R.id.tvNotificationTime);
+            tvTime    = itemView.findViewById(R.id.tvNotificationTime);
         }
     }
 }

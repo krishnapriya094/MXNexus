@@ -2,7 +2,6 @@ package com.example.mxnexus.ui.home
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -17,6 +16,8 @@ import com.google.firebase.firestore.Query
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.Post
 import com.example.mxnexus.ui.auth.LoginActivity
+import com.example.mxnexus.ui.messages.ChatActivity
+import com.example.mxnexus.ui.profile.UserProfileActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -26,49 +27,52 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var fabCreatePost: FloatingActionButton
     private lateinit var postAdapter: PostAdapter
     private val postList = mutableListOf<Post>()
+    private var currentUserId: String = ""
     private var currentUserRole: String = "Student"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
-        Log.d("HomeActivity", "onCreate: starting")
 
         auth = FirebaseAuth.getInstance()
         db   = FirebaseFirestore.getInstance()
+        currentUserId = auth.currentUser?.uid ?: ""
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(findViewById<MaterialToolbar>(R.id.toolbar))
 
         rvPosts = findViewById(R.id.rvPosts)
         rvPosts.layoutManager = LinearLayoutManager(this)
 
-        // Fetch user role before initializing adapter
-        val uid = auth.currentUser?.uid
-        Log.d("HomeActivity", "onCreate: current uid=$uid")
-        if (uid != null) {
-            db.collection("users").document(uid).get().addOnSuccessListener { doc ->
-                currentUserRole = doc.getString("role") ?: "Student"
-                Log.d("HomeActivity", "onCreate: role fetched=$currentUserRole")
-                initAdapter()
-            }
+        if (currentUserId.isNotEmpty()) {
+            db.collection("users").document(currentUserId).get()
+                .addOnSuccessListener { doc ->
+                    currentUserRole = doc.getString("role") ?: "Student"
+                    initAdapter()
+                }
         } else {
             initAdapter()
         }
     }
 
     private fun initAdapter() {
-        Log.d("HomeActivity", "initAdapter: starting")
         postAdapter = PostAdapter(
-            posts          = postList,
-            currentUserId  = auth.currentUser?.uid ?: "",
+            posts           = postList,
+            currentUserId   = currentUserId,
             currentUserRole = currentUserRole,
-            onLikeClick    = { post -> likePost(post) },
-            onCommentClick = { post ->
-                val sheet = CommentsBottomSheet.newInstance(post.postId)
-                sheet.show(supportFragmentManager, "CommentsBottomSheet")
+            onLikeClick     = { post -> likePost(post) },
+            onCommentClick  = { post ->
+                CommentsBottomSheet.newInstance(post.postId)
+                    .show(supportFragmentManager, "CommentsBottomSheet")
             },
-            onShareClick   = { post -> sharePost(post) },
-            onDeleteClick  = { post -> confirmDeletePost(post) }
+            onShareClick    = { post -> sharePost(post) },
+            onDeleteClick   = { post -> confirmDeletePost(post) },
+            onMessageClick  = { post -> openChatWithUser(post.userId, post.userName) },
+            onProfileClick  = { userId ->
+                startActivity(
+                    Intent(this, UserProfileActivity::class.java)
+                        .putExtra("userId", userId)
+                )
+            }
         )
         rvPosts.adapter = postAdapter
 
@@ -77,95 +81,87 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, CreatePostActivity::class.java))
         }
 
-        Log.d("HomeActivity", "initAdapter: adapter set, loading posts")
         loadPosts()
     }
 
+    /**
+     * Navigates to ChatActivity for the given user.
+     * Fetches the user's name from Firestore when it is blank.
+     */
+    private fun openChatWithUser(userId: String, name: String) {
+        if (userId.isBlank() || userId == currentUserId) return
+        if (name.isNotBlank()) {
+            launchChat(userId, name)
+        } else {
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { doc ->
+                    launchChat(userId, doc.getString("name") ?: "User")
+                }
+        }
+    }
+
+    private fun launchChat(userId: String, name: String) {
+        startActivity(
+            Intent(this, ChatActivity::class.java)
+                .putExtra("receiverId", userId)
+                .putExtra("receiverName", name)
+        )
+    }
+
     private fun loadPosts() {
-        Log.d("HomeActivity", "loadPosts: starting listener")
         db.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("HomeActivity", "loadPosts: error", error)
                     Toast.makeText(this, "Error loading posts", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
                 val posts = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(Post::class.java)?.copy(postId = doc.id)
                 } ?: emptyList()
-                Log.d("HomeActivity", "loadPosts: snapshot received, count=${posts.size}")
-                if (::postAdapter.isInitialized) {
-                    postAdapter.updatePosts(posts)
-                } else {
-                    Log.w("HomeActivity", "loadPosts: postAdapter not initialized yet")
-                }
+                if (::postAdapter.isInitialized) postAdapter.updatePosts(posts)
             }
     }
 
     private fun likePost(post: Post) {
-        val userId  = auth.currentUser?.uid ?: return
+        if (currentUserId.isEmpty()) return
         val postRef = db.collection("posts").document(post.postId)
-        val isLiked = post.likedBy.contains(userId)
-
-        if (isLiked) {
-            val updatedLikedBy = post.likedBy.toMutableList().also { it.remove(userId) }
-            postRef.update("likeCount", post.likeCount - 1, "likedBy", updatedLikedBy)
+        if (post.likedBy.contains(currentUserId)) {
+            postRef.update(
+                "likeCount", post.likeCount - 1,
+                "likedBy", post.likedBy.toMutableList().also { it.remove(currentUserId) }
+            )
         } else {
-            val updatedLikedBy = post.likedBy.toMutableList().also { it.add(userId) }
-            postRef.update("likeCount", post.likeCount + 1, "likedBy", updatedLikedBy)
+            postRef.update(
+                "likeCount", post.likeCount + 1,
+                "likedBy", post.likedBy.toMutableList().also { it.add(currentUserId) }
+            )
         }
     }
 
     private fun sharePost(post: Post) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "${post.userName} on MX Nexus:\n\n${post.content}")
-        }
-        startActivity(Intent.createChooser(intent, "Share post via"))
+        startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "${post.userName} on MX Nexus:\n\n${post.content}")
+                },
+                "Share post via"
+            )
+        )
     }
 
     private fun confirmDeletePost(post: Post) {
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Delete Post")
             .setMessage("Are you sure you want to delete this post?")
-            .setPositiveButton("Delete") { _, _ -> deletePost(post) }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun deletePost(post: Post) {
-        db.collection("posts").document(post.postId)
-            .delete()
-            .addOnSuccessListener {
-                Toast.makeText(this, "Post deleted!", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to delete post", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun showEditDialog(post: Post) {
-        val editText = android.widget.EditText(this).apply {
-            setText(post.content)
-            setPadding(40, 20, 40, 20)
-        }
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Edit Post")
-            .setView(editText)
-            .setPositiveButton("Save") { _, _ ->
-                val newContent = editText.text.toString().trim()
-                if (newContent.isEmpty()) {
-                    Toast.makeText(this, "Post cannot be empty!", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-                db.collection("posts").document(post.postId)
-                    .update("content", newContent)
+            .setPositiveButton("Delete") { _, _ ->
+                db.collection("posts").document(post.postId).delete()
                     .addOnSuccessListener {
-                        Toast.makeText(this, "Post updated!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Post deleted!", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener {
-                        Toast.makeText(this, "Failed to update post", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Failed to delete post", Toast.LENGTH_SHORT).show()
                     }
             }
             .setNegativeButton("Cancel", null)

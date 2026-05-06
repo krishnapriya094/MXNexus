@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.Answer
+import com.example.mxnexus.util.NotificationHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query as FirestoreQuery
@@ -126,16 +127,12 @@ class QueryDetailActivity : AppCompatActivity() {
     }
 
     private fun sendAnswerAlert(alumniName: String) {
-        if (auth.currentUser?.uid == queryOwnerId) return
-        
-        val alert = hashMapOf(
-            "receiverId" to queryOwnerId,
-            "message" to "$alumniName answered your question!",
-            "type" to "mention", // Reusing mention icon for answers
-            "postId" to queryId, // In this case, it links to queryId
-            "timestamp" to System.currentTimeMillis()
+        if (auth.currentUser?.uid == queryOwnerId || queryOwnerId.isEmpty()) return
+        NotificationHelper.sendQueryReplyNotification(
+            queryOwnerId = queryOwnerId,
+            senderName   = alumniName,
+            queryId      = queryId
         )
-        db.collection("alerts").add(alert)
     }
 
     private fun updateAnswerCount() {

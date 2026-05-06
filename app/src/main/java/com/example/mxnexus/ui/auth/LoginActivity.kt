@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.mxnexus.R
 import com.example.mxnexus.MainActivity
+import com.example.mxnexus.service.MXNexusFirebaseMessagingService
 import com.example.mxnexus.ui.admin.AdminDashboardActivity
 
 class LoginActivity : AppCompatActivity() {
@@ -89,8 +90,9 @@ class LoginActivity : AppCompatActivity() {
         db.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
                 showLoading(false)
+                // Save / refresh FCM token for this device
+                MXNexusFirebaseMessagingService.saveFcmToken(uid)
                 val isAdmin = doc.getBoolean("isAdmin") ?: false
-                Log.d("LoginActivity", "checkUserRoleAndRedirect: isAdmin=$isAdmin")
                 if (isAdmin) {
                     startActivity(Intent(this, AdminDashboardActivity::class.java))
                 } else {

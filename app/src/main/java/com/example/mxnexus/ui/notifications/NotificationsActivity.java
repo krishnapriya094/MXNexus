@@ -3,7 +3,6 @@ package com.example.mxnexus.ui.notifications;
 import android.os.Bundle;
 import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.mxnexus.R;
@@ -31,19 +30,8 @@ public class NotificationsActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // 1. Setup Toolbar with Back Button
-        Toolbar toolbar = findViewById(R.id.toolbarNotifications);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
-        }
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Return to the previous screen (Home)
-                onBackPressed();
-            }
-        });
+        // Back button (Toolbar replaced by ImageView in updated layout)
+        findViewById(R.id.btnNotifBack).setOnClickListener(v -> onBackPressed());
 
         // 2. Initialize RecyclerView
         rvNotifications = findViewById(R.id.rvNotifications);

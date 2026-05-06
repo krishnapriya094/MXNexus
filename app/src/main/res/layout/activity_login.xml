@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,13 +14,13 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <!-- Logo Section -->
+        <!-- Logo Section - Added top margin for better boundary -->
         <ImageView
-            android:layout_width="140dp"
-            android:layout_height="140dp"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:src="@drawable/finalapp_logo_mxnexus"
             android:scaleType="fitCenter"
-            android:layout_marginTop="60dp"
+            android:layout_marginTop="40dp"
             android:layout_marginBottom="16dp"/>
 
         <TextView
@@ -93,7 +94,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:text="Forgot Password?"
-            android:textColor="#6200EE"
+            android:textColor="#FF00CC"
             android:textSize="13sp"
             android:textStyle="bold"
             android:layout_marginBottom="24dp"/>
@@ -171,7 +172,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Sign up"
-                android:textColor="#6200EE"
+                android:textColor="#FF00CC"
                 android:textStyle="bold"
                 android:textSize="14sp"/>
         </LinearLayout>

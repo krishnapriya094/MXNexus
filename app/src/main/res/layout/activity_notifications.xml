@@ -4,34 +4,120 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="#FAFAFA">
 
-    <!-- Header Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbarNotifications"
+    <!-- Header -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF">
+
+        <ImageView
+            android:id="@+id/btnNotifBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_back"
+            android:padding="6dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="#1A1A2E"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Notifications"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A2E"/>
+
+        <TextView
+            android:id="@+id/btnMarkAllRead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mark all read"
+            android:textColor="#FF00CC"
+            android:textSize="13sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"/>
+
+    </LinearLayout>
+
+    <!-- Filter Tabs -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
         android:background="#FFFFFF"
-        android:elevation="4dp"
-        app:navigationIcon="?attr/homeAsUpIndicator">
+        app:tabTextColor="#888888"
+        app:tabSelectedTextColor="#FF00CC"
+        app:tabIndicatorColor="#FF00CC"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#F0F0F0"/>
+
+    <!-- Notifications List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="80dp"
+        android:background="#FAFAFA"/>
+
+    <!-- Empty state -->
+    <LinearLayout
+        android:id="@+id/notifEmptyLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="48dp"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Alerts"
-            android:textSize="18sp"
+            android:text="🔔"
+            android:textSize="48sp"
+            android:gravity="center"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="You're all caught up!"
+            android:textColor="#1A1A2E"
+            android:textSize="17sp"
             android:textStyle="bold"
-            android:textColor="#333333" />
+            android:gravity="center"
+            android:layout_marginTop="12dp"/>
 
-    </androidx.appcompat.widget.Toolbar>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No new notifications right now"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginTop="6dp"/>
 
-    <!-- RecyclerView for Notifications -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvNotifications"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:background="#FFFFFF" />
+    </LinearLayout>
 
 </LinearLayout>

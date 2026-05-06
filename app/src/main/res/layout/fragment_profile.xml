@@ -51,7 +51,7 @@
                         android:id="@+id/tvProfileName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Rahul Verma"
+                        android:text="User Name"
                         android:textColor="#FFFFFF"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -60,7 +60,7 @@
                         android:id="@+id/tvProfileEmail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="rahulverma"
+                        android:text="username"
                         android:textColor="#CCFFFFFF"
                         android:textSize="14sp" />
 
@@ -68,7 +68,7 @@
                         android:id="@+id/tvProfileRole"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Pro Member"
+                        android:text="Role"
                         android:textColor="#FFFFFF"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -91,7 +91,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="20dp"
+                android:padding="16dp"
                 android:gravity="center">
 
                 <LinearLayout
@@ -104,66 +104,44 @@
                         android:id="@+id/tvPostCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="128"
+                        android:text="0"
                         android:textColor="#333333"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Posts"
                         android:textColor="#999999"
-                        android:textSize="12sp" />
+                        android:textSize="10sp" />
                 </LinearLayout>
 
-                <View android:layout_width="1dp" android:layout_height="30dp" android:background="#EEEEEE" />
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#EEEEEE" />
 
                 <LinearLayout
-                    android:id="@+id/layoutFollowers"
+                    android:id="@+id/layoutConnections"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
                     <TextView
-                        android:id="@+id/tvFollowerCount"
+                        android:id="@+id/tvConnectionCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="2.4K"
+                        android:text="0"
                         android:textColor="#333333"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Followers"
+                        android:text="Connections"
                         android:textColor="#999999"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <View android:layout_width="1dp" android:layout_height="30dp" android:background="#EEEEEE" />
-
-                <LinearLayout
-                    android:id="@+id/layoutFollowing"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center">
-                    <TextView
-                        android:id="@+id/tvFollowingCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="358"
-                        android:textColor="#333333"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Following"
-                        android:textColor="#999999"
-                        android:textSize="12sp" />
+                        android:textSize="10sp" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -180,7 +158,7 @@
                 android:id="@+id/tvProfileBio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Product Designer | UI/UX Enthusiast\nBuilding meaningful digital experiences."
+                android:text="No bio yet"
                 android:textColor="#555555"
                 android:textSize="14sp"
                 android:lineSpacingMultiplier="1.2" />
@@ -189,7 +167,7 @@
                 android:id="@+id/tvDetail1Value"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="rahul@example.com"
+                android:text="email@example.com"
                 android:textColor="#777777"
                 android:textSize="13sp"
                 android:layout_marginTop="12dp"
@@ -201,7 +179,7 @@
                 android:id="@+id/tvDetail2Value"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Bangalore, India"
+                android:text="Location"
                 android:textColor="#777777"
                 android:textSize="13sp"
                 android:layout_marginTop="8dp"
@@ -222,6 +200,31 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/btnPendingRequests"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:background="?attr/selectableItemBackground">
+                    <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_my_calendar" app:tint="#666666" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Connection Requests" android:layout_marginStart="16dp" android:textColor="#333333" android:textSize="14sp" />
+                    <TextView
+                        android:id="@+id/tvRequestBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/badge_circle"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:paddingHorizontal="6dp"
+                        android:visibility="gone"
+                        android:text="0" />
+                    <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_back" android:rotation="180" app:tint="#CCCCCC" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F5F5F5" android:layout_marginHorizontal="16dp" />
 
                 <LinearLayout
                     android:id="@+id/btnEditProfile"

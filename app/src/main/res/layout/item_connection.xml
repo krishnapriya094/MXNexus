@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical">
+
+    <!-- Gradient Avatar -->
+    <TextView
+        android:id="@+id/tvConnectionInitial"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/gradient_avatar_bg"
+        android:gravity="center"
+        android:text="U"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+
+    <!-- Info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvConnectionName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User Name"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:textColor="#1A1A2E"/>
+
+        <TextView
+            android:id="@+id/tvConnectionRole"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Role at Company"
+            android:textColor="#777777"
+            android:textSize="13sp"
+            android:layout_marginTop="1dp"/>
+
+        <TextView
+            android:id="@+id/tvConnectionMutual"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#FF00CC"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"/>
+
+    </LinearLayout>
+
+    <!-- Action button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConnectionAction"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:text="Message"
+        android:textSize="12sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:cornerRadius="18dp"
+        app:backgroundTint="#FF00CC"
+        android:paddingHorizontal="14dp"/>
+
+</LinearLayout>

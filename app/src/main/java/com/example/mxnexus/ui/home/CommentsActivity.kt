@@ -14,6 +14,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.Comment
+import com.example.mxnexus.util.NotificationHelper
 
 class CommentsActivity : AppCompatActivity() {
 
@@ -114,14 +115,11 @@ class CommentsActivity : AppCompatActivity() {
     }
 
     private fun sendCommentAlert(senderName: String) {
-        val alert = hashMapOf(
-            "receiverId" to postOwnerId,
-            "message" to "$senderName commented on your post",
-            "type" to "comment",
-            "postId" to postId,
-            "timestamp" to System.currentTimeMillis()
+        NotificationHelper.sendCommentNotification(
+            postOwnerId = postOwnerId,
+            senderName  = senderName,
+            postId      = postId
         )
-        db.collection("alerts").add(alert)
     }
 
     private fun updatePostCommentCount(change: Int) {

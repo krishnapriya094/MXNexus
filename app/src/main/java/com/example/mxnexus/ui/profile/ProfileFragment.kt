@@ -28,10 +28,10 @@ class ProfileFragment : Fragment() {
     private lateinit var tvDetail1Value: TextView
     private lateinit var tvDetail2Value: TextView
     private lateinit var tvPostCount: TextView
-    private lateinit var tvFollowerCount: TextView
-    private lateinit var tvFollowingCount: TextView
-    private lateinit var layoutFollowers: LinearLayout
-    private lateinit var layoutFollowing: LinearLayout
+    private lateinit var tvConnectionCount: TextView
+    private lateinit var tvRequestBadge: TextView
+    private lateinit var layoutConnections: LinearLayout
+    private lateinit var btnPendingRequests: LinearLayout
     private lateinit var btnEditProfile: LinearLayout
     private lateinit var btnLogout: LinearLayout
     private lateinit var btnSettings: ImageView
@@ -58,17 +58,19 @@ class ProfileFragment : Fragment() {
         tvDetail1Value = view.findViewById(R.id.tvDetail1Value)
         tvDetail2Value = view.findViewById(R.id.tvDetail2Value)
         tvPostCount = view.findViewById(R.id.tvPostCount)
-        tvFollowerCount = view.findViewById(R.id.tvFollowerCount)
-        tvFollowingCount = view.findViewById(R.id.tvFollowingCount)
-        layoutFollowers = view.findViewById(R.id.layoutFollowers)
-        layoutFollowing = view.findViewById(R.id.layoutFollowing)
-        imgProfileAvatar = view.findViewById(R.id.imgProfileMainAvatar)
-
+        tvConnectionCount = view.findViewById(R.id.tvConnectionCount)
+        tvRequestBadge = view.findViewById(R.id.tvRequestBadge)
+        
+        layoutConnections = view.findViewById(R.id.layoutConnections)
+        
+        btnPendingRequests = view.findViewById(R.id.btnPendingRequests)
         btnEditProfile = view.findViewById(R.id.btnEditProfile)
         btnLogout = view.findViewById(R.id.btnLogout)
         btnSettings = view.findViewById(R.id.btnSettings)
+        imgProfileAvatar = view.findViewById(R.id.imgProfileMainAvatar)
 
         loadProfile()
+        loadPendingRequestsCount()
 
         btnEditProfile.setOnClickListener {
             startActivity(Intent(requireContext(), EditProfileActivity::class.java))
@@ -78,12 +80,15 @@ class ProfileFragment : Fragment() {
             startActivity(Intent(requireContext(), SettingsActivity::class.java))
         }
 
-        layoutFollowers.setOnClickListener {
-            Toast.makeText(requireContext(), "Followers list coming soon!", Toast.LENGTH_SHORT).show()
+        btnPendingRequests.setOnClickListener {
+            startActivity(Intent(requireContext(), PendingRequestsActivity::class.java))
         }
 
-        layoutFollowing.setOnClickListener {
-            Toast.makeText(requireContext(), "Following list coming soon!", Toast.LENGTH_SHORT).show()
+        layoutConnections.setOnClickListener {
+            val intent = Intent(requireContext(), UserListActivity::class.java)
+            intent.putExtra("userId", auth.currentUser?.uid)
+            intent.putExtra("type", "Connections")
+            startActivity(intent)
         }
 
         btnLogout.setOnClickListener {
@@ -105,10 +110,7 @@ class ProfileFragment : Fragment() {
 
         db.collection("users").document(userId)
             .addSnapshotListener { doc, error ->
-                if (error != null) {
-                    Toast.makeText(requireContext(), "Failed to load profile", Toast.LENGTH_SHORT).show()
-                    return@addSnapshotListener
-                }
+                if (error != null || !isAdded) return@addSnapshotListener
                 
                 if (doc != null && doc.exists()) {
                     val name = doc.getString("name") ?: ""
@@ -125,17 +127,16 @@ class ProfileFragment : Fragment() {
                         com.bumptech.glide.Glide.with(this@ProfileFragment)
                             .load(photoUrl)
                             .circleCrop()
+                            .placeholder(R.drawable.ic_profile)
                             .into(imgProfileAvatar)
                     }
 
-                    val followers = doc.get("followers") as? List<*>
-                    val following = doc.get("following") as? List<*>
-                    tvFollowerCount.text = (followers?.size ?: 0).toString()
-                    tvFollowingCount.text = (following?.size ?: 0).toString()
+                    val connections = doc.get("connections") as? List<*> ?: emptyList<String>()
+                    tvConnectionCount.text = connections.size.toString()
 
                     // Fetch Post Count
                     db.collection("posts").whereEqualTo("userId", userId).get().addOnSuccessListener { posts ->
-                        tvPostCount.text = posts.size().toString()
+                        if (isAdded) tvPostCount.text = posts.size().toString()
                     }
 
                     if (role == "Student") {
@@ -148,6 +149,23 @@ class ProfileFragment : Fragment() {
                         tvDetail1Value.text = doc.getString("email") ?: "-"
                         tvDetail2Value.text = "Verified Admin"
                     }
+                }
+            }
+    }
+
+    private fun loadPendingRequestsCount() {
+        val userId = auth.currentUser?.uid ?: return
+        db.collection("connectionRequests")
+            .whereEqualTo("receiverId", userId)
+            .whereEqualTo("status", "pending")
+            .addSnapshotListener { snapshot, _ ->
+                if (!isAdded) return@addSnapshotListener
+                val count = snapshot?.size() ?: 0
+                if (count > 0) {
+                    tvRequestBadge.text = count.toString()
+                    tvRequestBadge.visibility = View.VISIBLE
+                } else {
+                    tvRequestBadge.visibility = View.GONE
                 }
             }
     }

@@ -19,6 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.Comment
+import com.example.mxnexus.util.NotificationHelper
 
 class CommentsBottomSheet : BottomSheetDialogFragment() {
 
@@ -236,60 +237,26 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
      private fun sendMentionAlert(receiverId: String) {
          val currentUserId = auth.currentUser?.uid ?: return
          if (receiverId == currentUserId) return
-
-         db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
-             val senderName = doc.getString("name") ?: "Someone"
-             val alert = hashMapOf(
-                 "receiverId" to receiverId,
-                 "message" to "$senderName mentioned you in a comment",
-                 "type" to "mention",
-                 "postId" to postId,
-                 "timestamp" to System.currentTimeMillis()
-             )
-             Log.d("CommentsBottomSheet", "Creating mention alert: receiverId=$receiverId, postId=$postId")
-             db.collection("alerts").add(alert)
-                 .addOnSuccessListener { Log.d("CommentsBottomSheet", "Mention alert created for $receiverId") }
-                 .addOnFailureListener { e -> Log.e("CommentsBottomSheet", "Mention alert failed", e) }
-         }.addOnFailureListener { e ->
-             Log.e("CommentsBottomSheet", "Failed to send mention alert", e)
-         }
+         val senderName = ""  // resolved inside helper
+         NotificationHelper.sendMentionNotification(
+             mentionedUserId = receiverId,
+             senderName      = senderName,
+             postId          = postId
+         )
      }
 
      private fun sendCommentAlert() {
-        val currentUserId = auth.currentUser?.uid ?: return
-        db.collection("posts").document(postId).get()
-            .addOnSuccessListener { postDoc ->
-                val receiverId = postDoc.getString("userId")
-
-                if (receiverId.isNullOrEmpty()) {
-                    Log.w("CommentsBottomSheet", "Post $postId missing userId field. Skipping alert.")
-                    return@addOnSuccessListener
-                }
-
-                if (receiverId == currentUserId) return@addOnSuccessListener
-
-                db.collection("users").document(currentUserId).get().addOnSuccessListener { userDoc ->
-                    val senderName = userDoc.getString("name") ?: "Someone"
-                    val alert = hashMapOf(
-                        "receiverId" to receiverId,
-                        "message" to "$senderName commented on your post",
-                        "type" to "comment",
-                        "postId" to postId,
-                        "timestamp" to System.currentTimeMillis()
-                    )
-                    Log.d("CommentsBottomSheet", "Creating comment alert: receiverId=$receiverId, postId=$postId")
-                    db.collection("alerts").add(alert)
-                        .addOnSuccessListener { docRef ->
-                            Log.d("CommentsBottomSheet", "Comment alert created successfully: ${docRef.id}")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("CommentsBottomSheet", "Comment alert creation failed", e)
-                        }
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("CommentsBottomSheet", "Failed to fetch post details", e)
-            }
+         val currentUserId = auth.currentUser?.uid ?: return
+         db.collection("posts").document(postId).get()
+             .addOnSuccessListener { postDoc ->
+                 val receiverId = postDoc.getString("userId") ?: return@addOnSuccessListener
+                 if (receiverId == currentUserId) return@addOnSuccessListener
+                 NotificationHelper.sendCommentNotification(
+                     postOwnerId = receiverId,
+                     senderName  = "",   // resolved inside helper
+                     postId      = postId
+                 )
+             }
      }
 
     private fun confirmDeleteComment(comment: Comment) {

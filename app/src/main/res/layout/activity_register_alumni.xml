@@ -51,6 +51,26 @@
                 android:textColor="#999999"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email Address"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_marginBottom="16dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="#EEEEEE"
+            app:hintTextColor="#999999">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmailPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:textColor="#999999"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!-- Work Type Selection -->
         <TextView
             android:layout_width="match_parent"
@@ -67,7 +87,6 @@
             android:orientation="horizontal"
             android:layout_marginBottom="24dp">
 
-            <!-- Employed Card -->
             <LinearLayout
                 android:id="@+id/cardEmployed"
                 android:layout_width="0dp"
@@ -81,7 +100,6 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Employed" android:textSize="13sp" android:textColor="#333333" android:textStyle="bold"/>
             </LinearLayout>
 
-            <!-- Entrepreneur Card -->
             <LinearLayout
                 android:id="@+id/cardEntrepreneur"
                 android:layout_width="0dp"
@@ -222,7 +240,6 @@
                 android:textColor="#333333"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Gradient Register Button -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="52dp"

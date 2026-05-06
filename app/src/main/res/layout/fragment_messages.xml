@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FAFAFA">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="12dp"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Messages"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A2E"
+            android:fontFamily="sans-serif-medium"/>
+
+        <ImageView
+            android:id="@+id/btnNewChat"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/gradient_avatar_bg"
+            android:src="@drawable/ic_message"
+            android:tint="#FFFFFF"
+            android:padding="10dp"
+            android:clickable="true"
+            android:focusable="true"/>
+
+    </LinearLayout>
+
+    <!-- Search Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="12dp"
+        android:paddingTop="4dp"
+        android:background="#FFFFFF">
+
+        <EditText
+            android:id="@+id/etSearchMessages"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:background="@drawable/search_bar_bg"
+            android:paddingHorizontal="16dp"
+            android:hint="Search messages..."
+            android:textColorHint="#AAAAAA"
+            android:textColor="#1A1A2E"
+            android:textSize="14sp"
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="8dp"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:singleLine="true"/>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#F0F0F0"/>
+
+    <!-- Chat List -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshMessages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvChatList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="80dp"/>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Empty State (overlaid via FrameLayout isn't possible in LinearLayout;
+         visibility toggled in code) -->
+    <LinearLayout
+        android:id="@+id/tvMessagesEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="40dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💬"
+            android:textSize="56sp"
+            android:gravity="center"/>
+
+        <TextView
+            android:id="@+id/tvEmptyMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No messages yet"
+            android:textColor="#1A1A2E"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start a conversation from someone's profile!"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -17,9 +17,9 @@
         android:title="Queries"/>
 
     <item
-        android:id="@+id/notificationsFragment"
-        android:icon="@drawable/ic_heart"
-        android:title="Alerts"/>
+        android:id="@+id/chatListActivity"
+        android:icon="@drawable/ic_comment"
+        android:title="Messages"/>
 
     <item
         android:id="@+id/profileFragment"
