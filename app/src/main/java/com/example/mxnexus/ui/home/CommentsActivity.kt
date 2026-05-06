@@ -97,7 +97,7 @@ class CommentsActivity : AppCompatActivity() {
                 .addOnSuccessListener {
                     etComment.text.clear()
                     updatePostCommentCount(1)
-                    if (userId != postOwnerId) sendCommentAlert(userName)
+                    if (userId != postOwnerId) sendCommentAlert(userName, text)
                 }
         }
     }
@@ -114,11 +114,12 @@ class CommentsActivity : AppCompatActivity() {
             }.setNegativeButton("Cancel", null).show()
     }
 
-    private fun sendCommentAlert(senderName: String) {
+    private fun sendCommentAlert(senderName: String, commentText: String) {
         NotificationHelper.sendCommentNotification(
             postOwnerId = postOwnerId,
             senderName  = senderName,
-            postId      = postId
+            postId      = postId,
+            commentText = commentText
         )
     }
 

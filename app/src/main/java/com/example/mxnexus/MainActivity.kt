@@ -11,9 +11,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.mxnexus.ui.notifications.AlertsActivity
@@ -26,25 +24,27 @@ class MainActivity : AppCompatActivity() {
     private val db   = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    // IDs we've already notified about (prevents re-notifying old alerts on re-open)
+    // Only notify for alerts written AFTER this moment
+    private val appOpenTime = System.currentTimeMillis()
+    // Prevent duplicate notifications for the same doc
     private val notifiedIds = mutableSetOf<String>()
-    private var firstLoad = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Navigation
-        val navHost = supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
+        // Bottom nav
+        val navHost = supportFragmentManager
+            .findFragmentById(R.id.navHostFragment) as NavHostFragment
         findViewById<BottomNavigationView>(R.id.bottomNav)
             .setupWithNavController(navHost.navController)
 
-        // Bell icon → alerts screen
+        // Bell → alerts screen
         findViewById<ImageView>(R.id.btnToolbarNotifications).setOnClickListener {
             startActivity(Intent(this, AlertsActivity::class.java))
         }
 
-        // Ask for notification permission (Android 13+)
+        // Ask notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -52,59 +52,53 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        createNotificationChannel()
+        createChannel()
         watchAlerts()
     }
 
-    // ── Firestore listener ────────────────────────────────────────────────────
-
     private fun watchAlerts() {
-        val uid = auth.currentUser?.uid ?: return
+        val uid   = auth.currentUser?.uid ?: return
         val badge = findViewById<View>(R.id.notificationBadge)
 
         db.collection("alerts")
             .whereEqualTo("receiverId", uid)
-            .whereEqualTo("isRead", false)
             .addSnapshotListener { snap, _ ->
                 snap ?: return@addSnapshotListener
 
-                // Update the red badge on the bell icon
-                badge.visibility = if (snap.isEmpty) View.GONE else View.VISIBLE
+                // Update red badge (unread count)
+                val unread = snap.documents.count { (it.getBoolean("isRead") ?: false) == false }
+                badge.visibility = if (unread > 0) View.VISIBLE else View.GONE
 
-                if (firstLoad) {
-                    // Record existing alerts — don't notify for them
-                    snap.documents.forEach { notifiedIds.add(it.id) }
-                    firstLoad = false
-                    return@addSnapshotListener
-                }
-
-                // New alerts that just arrived
+                // Show system notification only for alerts that are NEW
                 snap.documents
-                    .filter { it.id !in notifiedIds }
+                    .filter { doc ->
+                        val ts = doc.getLong("timestamp") ?: 0L
+                        ts > appOpenTime && doc.id !in notifiedIds
+                    }
                     .forEach { doc ->
                         notifiedIds.add(doc.id)
-                        val title = when (doc.getString("type")) {
-                            "message"             -> "💬 New Message"
-                            "comment"             -> "💬 New Comment"
-                            "mention"             -> "🔔 You were mentioned"
-                            "query_reply"         -> "💡 Query Answered"
-                            "connection_request"  -> "🤝 Connection Request"
-                            "connection_accepted" -> "✅ Connection Accepted"
-                            else                  -> "MXNexus"
+
+                        val sender  = doc.getString("senderName") ?: "Someone"
+                        val body    = doc.getString("message")    ?: "You have a new notification"
+                        val title   = when (doc.getString("type")) {
+                            "message"             -> "$sender sent you a message"
+                            "comment"             -> "$sender commented on your post"
+                            "mention"             -> "$sender mentioned you"
+                            "query_reply"         -> "$sender answered your question"
+                            "connection_request"  -> "$sender sent a connection request"
+                            "connection_accepted" -> "$sender accepted your request"
+                            else                  -> "MXNexus — $sender"
                         }
-                        val body = doc.getString("message") ?: "You have a new notification"
-                        pushNotification(title, body)
+                        notify(title, body)
                     }
             }
     }
 
-    // ── Local notification ────────────────────────────────────────────────────
-
-    private fun pushNotification(title: String, body: String) {
-        val intent = Intent(this, AlertsActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    private fun notify(title: String, body: String) {
         val pi = PendingIntent.getActivity(
-            this, System.currentTimeMillis().toInt(), intent,
+            this, System.currentTimeMillis().toInt(),
+            Intent(this, AlertsActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
         val notif = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -116,19 +110,20 @@ class MainActivity : AppCompatActivity() {
             .setContentIntent(pi)
             .build()
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            NotificationManagerCompat.from(this)
-                .notify(System.currentTimeMillis().toInt(), notif)
-        }
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
+            .notify(System.currentTimeMillis().toInt(), notif)
     }
 
-    private fun createNotificationChannel() {
+    private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID, "MXNexus Notifications", NotificationManager.IMPORTANCE_HIGH
-            )
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
+                .createNotificationChannel(
+                    NotificationChannel(
+                        CHANNEL_ID,
+                        "MXNexus Notifications",
+                        NotificationManager.IMPORTANCE_HIGH
+                    )
+                )
         }
     }
 

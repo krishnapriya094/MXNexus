@@ -148,8 +148,16 @@ class ChatActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 etMessage.text.clear()
                 updateChatMeta(cid, msg)
-                // Notify recipient
-                
+                // Notify recipient with actual message text
+                db.collection("users").document(currentUserId).get()
+                    .addOnSuccessListener { userDoc ->
+                        val myName = userDoc.getString("name") ?: "Someone"
+                        NotificationHelper.sendMessageNotification(
+                            receiverId     = receiverId,
+                            senderName     = myName,
+                            messagePreview = if (text.length > 50) text.take(50) + "…" else text
+                        )
+                    }
             }
             .addOnFailureListener { Toast.makeText(this, "Send failed", Toast.LENGTH_SHORT).show() }
     }

@@ -205,7 +205,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                         etComment.text.clear()
                         rvMentionSuggestions.visibility = View.GONE
                         updateCommentCount(1)
-                        sendCommentAlert()
+                        sendCommentAlert(text)
                         handleMentionsInComment(text)
                     }
                     .addOnFailureListener {
@@ -228,24 +228,24 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 
                 // If this user was mentioned
                 if (mentions.any { it.equals(name.replace(" ", ""), ignoreCase = true) }) {
-                    sendMentionAlert(uid)
+                    sendMentionAlert(uid, text)
                 }
             }
         }
     }
 
-     private fun sendMentionAlert(receiverId: String) {
+     private fun sendMentionAlert(receiverId: String, commentText: String) {
          val currentUserId = auth.currentUser?.uid ?: return
          if (receiverId == currentUserId) return
-         val senderName = ""  // resolved inside helper
          NotificationHelper.sendMentionNotification(
              mentionedUserId = receiverId,
-             senderName      = senderName,
-             postId          = postId
+             senderName      = "",
+             postId          = postId,
+             commentText     = commentText
          )
      }
 
-     private fun sendCommentAlert() {
+     private fun sendCommentAlert(commentText: String) {
          val currentUserId = auth.currentUser?.uid ?: return
          db.collection("posts").document(postId).get()
              .addOnSuccessListener { postDoc ->
@@ -253,8 +253,9 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                  if (receiverId == currentUserId) return@addOnSuccessListener
                  NotificationHelper.sendCommentNotification(
                      postOwnerId = receiverId,
-                     senderName  = "",   // resolved inside helper
-                     postId      = postId
+                     senderName  = "",
+                     postId      = postId,
+                     commentText = commentText
                  )
              }
      }

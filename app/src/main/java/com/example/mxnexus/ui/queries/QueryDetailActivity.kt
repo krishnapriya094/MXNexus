@@ -120,18 +120,19 @@ class QueryDetailActivity : AppCompatActivity() {
             db.collection("queries").document(queryId).collection("answers").document(answerId).set(answer)
                 .addOnSuccessListener {
                     etAnswer.text.clear()
-                    sendAnswerAlert(name)
+                    sendAnswerAlert(name, text)
                     updateAnswerCount()
                 }
         }
     }
 
-    private fun sendAnswerAlert(alumniName: String) {
+    private fun sendAnswerAlert(alumniName: String, answerText: String) {
         if (auth.currentUser?.uid == queryOwnerId || queryOwnerId.isEmpty()) return
         NotificationHelper.sendQueryReplyNotification(
             queryOwnerId = queryOwnerId,
             senderName   = alumniName,
-            queryId      = queryId
+            queryId      = queryId,
+            answerText   = if (answerText.length > 60) answerText.take(60) + "…" else answerText
         )
     }
 
