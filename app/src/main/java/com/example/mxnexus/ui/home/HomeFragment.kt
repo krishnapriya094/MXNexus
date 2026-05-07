@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,6 +23,7 @@ class HomeFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var rvPosts: RecyclerView
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var postAdapter: PostAdapter
     private val postList = mutableListOf<Post>()
     private var currentUserId: String = ""
@@ -40,6 +42,12 @@ class HomeFragment : Fragment() {
 
         rvPosts = view.findViewById(R.id.rvPosts)
         rvPosts.layoutManager = LinearLayoutManager(requireContext())
+
+        swipeRefresh = view.findViewById(R.id.swipeRefreshHome)
+        swipeRefresh.setColorSchemeResources(R.color.primary)
+        swipeRefresh.setOnRefreshListener {
+            loadPosts()
+        }
 
         if (currentUserId.isNotEmpty()) {
             db.collection("users").document(currentUserId).get()
@@ -110,11 +118,15 @@ class HomeFragment : Fragment() {
         db.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (!isAdded || error != null) return@addSnapshotListener
+                if (!isAdded || error != null) {
+                    swipeRefresh.isRefreshing = false
+                    return@addSnapshotListener
+                }
                 val posts = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(Post::class.java)?.copy(postId = doc.id)
                 } ?: emptyList()
                 if (::postAdapter.isInitialized) postAdapter.updatePosts(posts)
+                swipeRefresh.isRefreshing = false
             }
     }
 

@@ -14,6 +14,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.Post
 import com.example.mxnexus.util.TimeUtils
+import com.google.firebase.firestore.FirebaseFirestore
 
 class PostAdapter(
     private var posts: MutableList<Post>,
@@ -27,6 +28,10 @@ class PostAdapter(
     private val onImageClick: ((String) -> Unit)? = null,
     private val onProfileClick: ((String) -> Unit)? = null
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
+
+    // Cache: userId → profileImageUrl (avoids repeat Firestore reads on scroll)
+    private val profileUrlCache = mutableMapOf<String, String>()
+    private val db = FirebaseFirestore.getInstance()
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val layoutAvatar: View       = itemView.findViewById(R.id.layoutPostAvatar)
@@ -69,18 +74,51 @@ class PostAdapter(
         holder.tvUserName.setOnClickListener { onProfileClick?.invoke(post.userId) }
 
         // Avatar
-        if (post.profileImageUrl.isNotBlank()) {
-            holder.imgAvatar.visibility = View.VISIBLE
-            holder.tvAvatarInitial.visibility = View.GONE
-            Glide.with(ctx)
-                .load(post.profileImageUrl)
-                .apply(RequestOptions.circleCropTransform())
-                .placeholder(R.drawable.ic_profile)
-                .into(holder.imgAvatar)
-        } else {
-            holder.imgAvatar.visibility = View.GONE
-            holder.tvAvatarInitial.visibility = View.VISIBLE
-            holder.tvAvatarInitial.text = post.userName.firstOrNull()?.uppercase() ?: "U"
+        val embeddedUrl = post.profileImageUrl
+        val cachedUrl   = profileUrlCache[post.userId]
+
+        fun loadAvatar(url: String) {
+            if (url.isNotBlank()) {
+                holder.imgAvatar.visibility       = View.VISIBLE
+                holder.tvAvatarInitial.visibility = View.GONE
+                Glide.with(ctx)
+                    .load(url)
+                    .apply(RequestOptions.circleCropTransform())
+                    .placeholder(R.drawable.ic_profile)
+                    .into(holder.imgAvatar)
+            } else {
+                holder.imgAvatar.visibility       = View.GONE
+                holder.tvAvatarInitial.visibility = View.VISIBLE
+                holder.tvAvatarInitial.text = post.userName.firstOrNull()?.uppercase() ?: "U"
+            }
+        }
+
+        when {
+            embeddedUrl.isNotBlank() -> {
+                // Post already has the URL stored — use it directly
+                profileUrlCache[post.userId] = embeddedUrl
+                loadAvatar(embeddedUrl)
+            }
+            cachedUrl != null -> {
+                // We already fetched this user's URL earlier in this session
+                loadAvatar(cachedUrl)
+            }
+            else -> {
+                // Show initial while we fetch the real URL from Firestore
+                holder.imgAvatar.visibility       = View.GONE
+                holder.tvAvatarInitial.visibility = View.VISIBLE
+                holder.tvAvatarInitial.text = post.userName.firstOrNull()?.uppercase() ?: "U"
+
+                db.collection("users").document(post.userId).get()
+                    .addOnSuccessListener { doc ->
+                        val url = doc.getString("profileImageUrl") ?: ""
+                        profileUrlCache[post.userId] = url
+                        // Only update if this ViewHolder still shows the same post
+                        if (holder.tvUserName.text == post.userName.ifBlank { "Unknown User" }) {
+                            loadAvatar(url)
+                        }
+                    }
+            }
         }
 
         // ── Post image ─────────────────────────────────────────────────────────

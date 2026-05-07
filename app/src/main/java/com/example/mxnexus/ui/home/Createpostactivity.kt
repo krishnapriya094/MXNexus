@@ -11,8 +11,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.mxnexus.R
+import com.example.mxnexus.util.CloudinaryUploader
 import com.example.mxnexus.util.TimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -21,6 +23,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import kotlinx.coroutines.launch
 import java.util.*
 
 class CreatePostActivity : AppCompatActivity() {
@@ -161,34 +164,24 @@ class CreatePostActivity : AppCompatActivity() {
          }
 
          if (selectedImageUri != null) {
-             val storageRef = com.google.firebase.storage.FirebaseStorage.getInstance().reference
-             val imageRef = storageRef.child("post_images/${uid}_${System.currentTimeMillis()}.jpg")
-             
              val bytes = contentResolver.openInputStream(selectedImageUri!!)?.use { it.readBytes() }
              if (bytes == null) {
                  btnPost.isEnabled = true
                  progressUpload.visibility = View.GONE
                  tvUploadStatus.visibility = View.GONE
-                 Toast.makeText(this, "Could not read image file", Toast.LENGTH_LONG).show()
+                 Toast.makeText(this, "Could not read image", Toast.LENGTH_LONG).show()
                  return
              }
 
-             val uploadTask = imageRef.putBytes(bytes)
-             
-             uploadTask.continueWithTask { task ->
-                 if (!task.isSuccessful) {
-                     task.exception?.let { throw it }
-                 }
-                 imageRef.downloadUrl
-             }.addOnCompleteListener { task ->
-                 if (task.isSuccessful) {
-                     val downloadUri = task.result.toString()
-                     savePostToFirestore(uid, caption, downloadUri)
-                 } else {
+             lifecycleScope.launch {
+                 try {
+                     val imageUrl = CloudinaryUploader.upload(bytes, folder = "post_images")
+                     savePostToFirestore(uid, caption, imageUrl)
+                 } catch (e: Exception) {
                      btnPost.isEnabled = true
                      progressUpload.visibility = View.GONE
                      tvUploadStatus.visibility = View.GONE
-                     Toast.makeText(this, "Image upload failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                     Toast.makeText(this@CreatePostActivity, "Upload failed: ${e.message}", Toast.LENGTH_LONG).show()
                  }
              }
          } else {

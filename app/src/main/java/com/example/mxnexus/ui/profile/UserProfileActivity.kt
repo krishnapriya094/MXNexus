@@ -3,10 +3,13 @@ package com.example.mxnexus.ui.profile
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.ConnectionRequest
 import com.example.mxnexus.ui.messages.ChatActivity
@@ -28,6 +31,7 @@ class UserProfileActivity : AppCompatActivity() {
     private var targetUserName: String = ""
 
     private lateinit var tvAvatar: TextView
+    private lateinit var imgProfilePhoto: ImageView
     private lateinit var tvName: TextView
     private lateinit var tvRole: TextView
     private lateinit var tvBio: TextView
@@ -63,6 +67,7 @@ class UserProfileActivity : AppCompatActivity() {
         findViewById<View>(R.id.userProfileToolbar).setOnClickListener { finish() }
 
         tvAvatar      = findViewById(R.id.tvUserAvatar)
+        imgProfilePhoto = findViewById(R.id.imgUserProfilePhoto)
         tvName        = findViewById(R.id.tvUserName)
         tvRole        = findViewById(R.id.tvUserRole)
         tvBio         = findViewById(R.id.tvUserBio)
@@ -121,6 +126,17 @@ class UserProfileActivity : AppCompatActivity() {
                 tvRole.text      = doc.getString("role") ?: ""
                 tvBio.text       = doc.getString("bio") ?: "No bio yet"
                 tvSkills.text    = doc.getString("skills") ?: "No skills listed"
+
+                val photoUrl = doc.getString("profileImageUrl") ?: ""
+                if (photoUrl.isNotBlank()) {
+                    imgProfilePhoto.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(photoUrl)
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(imgProfilePhoto)
+                } else {
+                    imgProfilePhoto.visibility = View.GONE
+                }
 
                 val connections = (doc.get("connections") as? List<*>) ?: emptyList<String>()
                 val followers   = (doc.get("followers")   as? List<*>) ?: emptyList<String>()

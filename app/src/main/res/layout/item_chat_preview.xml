@@ -26,6 +26,15 @@
             android:textSize="20sp"
             android:textStyle="bold"/>
 
+        <!-- Real profile photo (shown when URL available) -->
+        <ImageView
+            android:id="@+id/imgChatAvatar"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/gradient_avatar_bg"
+            android:visibility="gone"/>
+
         <!-- Online dot -->
         <View
             android:id="@+id/viewOnlineDot"

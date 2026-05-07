@@ -9,21 +9,22 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.mxnexus.R
+import com.example.mxnexus.util.CloudinaryUploader
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.launch
 
 class EditProfileActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
-    private lateinit var storage: FirebaseStorage
 
     private lateinit var imgAvatar: ImageView
     private lateinit var etName: TextInputEditText
@@ -54,8 +55,7 @@ class EditProfileActivity : AppCompatActivity() {
         setContentView(R.layout.activity_edit_profile)
 
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
-        storage = FirebaseStorage.getInstance()
+        db   = FirebaseFirestore.getInstance()
 
         val toolbar = findViewById<Toolbar>(R.id.editToolbar)
         setSupportActionBar(toolbar)
@@ -69,17 +69,17 @@ class EditProfileActivity : AppCompatActivity() {
     }
 
     private fun bindViews() {
-        imgAvatar = findViewById(R.id.imgEditAvatar)
+        imgAvatar   = findViewById(R.id.imgEditAvatar)
         btnChangePic = findViewById(R.id.btnChangePic)
-        etName = findViewById(R.id.etEditName)
-        etBio = findViewById(R.id.etEditBio)
-        etDetail1 = findViewById(R.id.etEditDetail1)
-        etDetail2 = findViewById(R.id.etEditDetail2)
-        etDetail3 = findViewById(R.id.etEditDetail3)
-        tilDetail1 = findViewById(R.id.tilDetail1)
-        tilDetail2 = findViewById(R.id.tilDetail2)
-        tilDetail3 = findViewById(R.id.tilDetail3)
-        btnSave = findViewById(R.id.btnSaveProfile)
+        etName      = findViewById(R.id.etEditName)
+        etBio       = findViewById(R.id.etEditBio)
+        etDetail1   = findViewById(R.id.etEditDetail1)
+        etDetail2   = findViewById(R.id.etEditDetail2)
+        etDetail3   = findViewById(R.id.etEditDetail3)
+        tilDetail1  = findViewById(R.id.tilDetail1)
+        tilDetail2  = findViewById(R.id.tilDetail2)
+        tilDetail3  = findViewById(R.id.tilDetail3)
+        btnSave     = findViewById(R.id.btnSaveProfile)
         progressBar = findViewById(R.id.editProgressBar)
     }
 
@@ -91,29 +91,23 @@ class EditProfileActivity : AppCompatActivity() {
             .addOnSuccessListener { doc ->
                 showLoading(false)
                 userRole = doc.getString("role") ?: "Student"
-                
+
                 etName.setText(doc.getString("name"))
                 etBio.setText(doc.getString("bio"))
-                
+
                 val photoUrl = doc.getString("profileImageUrl")
                 if (!photoUrl.isNullOrEmpty()) {
                     Glide.with(this).load(photoUrl).circleCrop().into(imgAvatar)
                 }
 
                 if (userRole == "Student") {
-                    tilDetail1.hint = "Department"
-                    etDetail1.setText(doc.getString("department"))
-                    tilDetail2.hint = "Batch"
-                    etDetail2.setText(doc.getString("batch"))
-                    tilDetail3.hint = "Skills"
-                    etDetail3.setText(doc.getString("skills"))
+                    tilDetail1.hint = "Department";  etDetail1.setText(doc.getString("department"))
+                    tilDetail2.hint = "Batch";       etDetail2.setText(doc.getString("batch"))
+                    tilDetail3.hint = "Skills";      etDetail3.setText(doc.getString("skills"))
                 } else {
-                    tilDetail1.hint = "Company"
-                    etDetail1.setText(doc.getString("company"))
-                    tilDetail2.hint = "Designation"
-                    etDetail2.setText(doc.getString("designation"))
-                    tilDetail3.hint = "Work Type"
-                    etDetail3.setText(doc.getString("workType"))
+                    tilDetail1.hint = "Company";     etDetail1.setText(doc.getString("company"))
+                    tilDetail2.hint = "Designation"; etDetail2.setText(doc.getString("designation"))
+                    tilDetail3.hint = "Work Type";   etDetail3.setText(doc.getString("workType"))
                 }
             }
     }
@@ -127,38 +121,21 @@ class EditProfileActivity : AppCompatActivity() {
     }
 
     private fun uploadImageAndSave() {
-        val uid = auth.currentUser?.uid ?: return
-        showLoading(true)
-        
-        android.util.Log.d("EditProfile", "uploadImageAndSave: starting for $uid")
-        
-        // Use a simpler reference path
-        val storageRef = storage.reference
-        val profilePicRef = storageRef.child("profile_pics/$uid.jpg")
-
         val bytes = contentResolver.openInputStream(selectedImageUri!!)?.use { it.readBytes() }
         if (bytes == null) {
-            showLoading(false)
             Toast.makeText(this, "Could not read image file", Toast.LENGTH_LONG).show()
             return
         }
 
-        val uploadTask = profilePicRef.putBytes(bytes)
-        
-        uploadTask.continueWithTask { task ->
-            if (!task.isSuccessful) {
-                task.exception?.let { throw it }
-            }
-            profilePicRef.downloadUrl
-        }.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val downloadUri = task.result
-                android.util.Log.d("EditProfile", "Download URL success: $downloadUri")
-                updateFirestore(downloadUri.toString())
-            } else {
-                android.util.Log.e("EditProfile", "Upload failed", task.exception)
+        showLoading(true)
+
+        lifecycleScope.launch {
+            try {
+                val url = CloudinaryUploader.upload(bytes, folder = "profile_pics")
+                updateFirestore(url)
+            } catch (e: Exception) {
                 showLoading(false)
-                Toast.makeText(this, "Upload failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@EditProfileActivity, "Upload failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -171,19 +148,19 @@ class EditProfileActivity : AppCompatActivity() {
         showLoading(true)
         val updates = hashMapOf<String, Any>(
             "name" to newName,
-            "bio" to etBio.text.toString().trim()
+            "bio"  to etBio.text.toString().trim()
         )
-        
+
         newPhotoUrl?.let { updates["profileImageUrl"] = it }
 
         if (userRole == "Student") {
             updates["department"] = etDetail1.text.toString()
-            updates["batch"] = etDetail2.text.toString()
-            updates["skills"] = etDetail3.text.toString()
+            updates["batch"]      = etDetail2.text.toString()
+            updates["skills"]     = etDetail3.text.toString()
         } else {
-            updates["company"] = etDetail1.text.toString()
+            updates["company"]     = etDetail1.text.toString()
             updates["designation"] = etDetail2.text.toString()
-            updates["workType"] = etDetail3.text.toString()
+            updates["workType"]    = etDetail3.text.toString()
         }
 
         db.collection("users").document(uid).update(updates)

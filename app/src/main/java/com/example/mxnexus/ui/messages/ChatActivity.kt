@@ -14,6 +14,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.mxnexus.R
 import com.example.mxnexus.data.model.Message
 import com.example.mxnexus.util.NotificationHelper
@@ -33,6 +35,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var tvChatUserName: TextView
     private lateinit var tvChatStatus: TextView
     private lateinit var tvHeaderInitial: TextView
+    private lateinit var imgChatHeaderAvatar: ImageView
     private lateinit var viewOnlineDot: View
     private lateinit var btnBack: ImageView
 
@@ -81,6 +84,7 @@ class ChatActivity : AppCompatActivity() {
         tvChatUserName  = findViewById(R.id.tvChatUserName)
         tvChatStatus    = findViewById(R.id.tvChatStatus)
         tvHeaderInitial = findViewById(R.id.tvChatHeaderInitial)
+        imgChatHeaderAvatar = findViewById(R.id.imgChatHeaderAvatar)
         viewOnlineDot   = findViewById(R.id.viewChatOnlineDot)
         rvMessages      = findViewById(R.id.rvMessages)
         etMessage       = findViewById(R.id.etMessage)
@@ -105,6 +109,17 @@ class ChatActivity : AppCompatActivity() {
                 receiverName           = name
                 tvChatUserName.text    = name
                 tvHeaderInitial.text   = name.firstOrNull()?.uppercase() ?: "U"
+
+                val photoUrl = doc.getString("profileImageUrl") ?: ""
+                if (photoUrl.isNotBlank()) {
+                    imgChatHeaderAvatar.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(photoUrl)
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(imgChatHeaderAvatar)
+                } else {
+                    imgChatHeaderAvatar.visibility = View.GONE
+                }
 
                 val lastActive = doc.getLong("lastActive") ?: 0L
                 val isOnline   = (System.currentTimeMillis() - lastActive) < 5 * 60 * 1000L

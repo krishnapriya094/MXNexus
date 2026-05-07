@@ -39,15 +39,29 @@
                 android:orientation="vertical"
                 android:gravity="center">
 
-                <TextView
-                    android:id="@+id/tvUserAvatar"
+                <FrameLayout
                     android:layout_width="88dp"
-                    android:layout_height="88dp"
-                    android:background="@drawable/circle_avatar"
-                    android:gravity="center"
-                    android:textColor="#FF00CC"
-                    android:textSize="32sp"
-                    android:textStyle="bold"/>
+                    android:layout_height="88dp">
+
+                    <TextView
+                        android:id="@+id/tvUserAvatar"
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:background="@drawable/circle_avatar"
+                        android:gravity="center"
+                        android:textColor="#FF00CC"
+                        android:textSize="32sp"
+                        android:textStyle="bold"/>
+
+                    <ImageView
+                        android:id="@+id/imgUserProfilePhoto"
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/circle_avatar"
+                        android:visibility="gone"/>
+
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/tvUserName"

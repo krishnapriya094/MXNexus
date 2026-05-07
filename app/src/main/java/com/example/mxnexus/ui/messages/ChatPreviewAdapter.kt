@@ -4,8 +4,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.mxnexus.R
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -33,6 +36,7 @@ class ChatPreviewAdapter(
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val tvInitial: TextView  = v.findViewById(R.id.tvChatInitial)
+        val imgAvatar: ImageView = v.findViewById(R.id.imgChatAvatar)
         val tvName: TextView     = v.findViewById(R.id.tvChatName)
         val tvRole: TextView     = v.findViewById(R.id.tvChatRole)
         val tvLastMsg: TextView  = v.findViewById(R.id.tvChatLastMessage)
@@ -85,9 +89,10 @@ class ChatPreviewAdapter(
                     .addOnSuccessListener { doc ->
                         if (doc == null || !doc.exists()) return@addOnSuccessListener
                         val profile = mapOf<String, Any?>(
-                            "name"       to (doc.getString("name") ?: "User"),
-                            "role"       to (doc.getString("role") ?: ""),
-                            "lastActive" to (doc.getLong("lastActive") ?: 0L)
+                            "name"            to (doc.getString("name") ?: "User"),
+                            "role"            to (doc.getString("role") ?: ""),
+                            "lastActive"      to (doc.getLong("lastActive") ?: 0L),
+                            "profileImageUrl" to (doc.getString("profileImageUrl") ?: "")
                         )
                         profileCache[receiverId] = profile
                         bindProfile(holder, receiverId, profile)
@@ -105,12 +110,23 @@ class ChatPreviewAdapter(
     }
 
     private fun bindProfile(holder: ViewHolder, receiverId: String, profile: Map<String, Any?>) {
-        val name = profile["name"]?.toString() ?: "User"
-        val role = profile["role"]?.toString() ?: ""
+        val name     = profile["name"]?.toString() ?: "User"
+        val role     = profile["role"]?.toString() ?: ""
+        val photoUrl = profile["profileImageUrl"]?.toString() ?: ""
 
         holder.tvName.text    = name
         holder.tvInitial.text = name.firstOrNull()?.uppercase() ?: "U"
         holder.tvRole.text    = role
+
+        if (photoUrl.isNotBlank()) {
+            holder.imgAvatar.visibility = View.VISIBLE
+            Glide.with(holder.itemView.context)
+                .load(photoUrl)
+                .apply(RequestOptions.circleCropTransform())
+                .into(holder.imgAvatar)
+        } else {
+            holder.imgAvatar.visibility = View.GONE
+        }
 
         // Online: last active within 5 minutes
         val lastActive = (profile["lastActive"] as? Long) ?: 0L
