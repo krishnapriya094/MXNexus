@@ -37,13 +37,9 @@ class UserProfileActivity : AppCompatActivity() {
     private lateinit var tvBio: TextView
     private lateinit var tvSkills: TextView
     private lateinit var tvConnections: TextView
-    private lateinit var tvFollowers: TextView
-    private lateinit var tvFollowing: TextView
     private lateinit var btnConnect: MaterialButton
     private lateinit var btnMessage: MaterialButton
     private lateinit var layoutConnections: LinearLayout
-    private lateinit var layoutFollowers: LinearLayout
-    private lateinit var layoutFollowing: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,43 +62,28 @@ class UserProfileActivity : AppCompatActivity() {
         // Back button — the toolbar is now an ImageView in the new layout
         findViewById<View>(R.id.userProfileToolbar).setOnClickListener { finish() }
 
-        tvAvatar      = findViewById(R.id.tvUserAvatar)
-        imgProfilePhoto = findViewById(R.id.imgUserProfilePhoto)
-        tvName        = findViewById(R.id.tvUserName)
-        tvRole        = findViewById(R.id.tvUserRole)
-        tvBio         = findViewById(R.id.tvUserBio)
-        tvSkills      = findViewById(R.id.tvUserSkills)
-        tvConnections = findViewById(R.id.tvUserConnectionCount)
-        tvFollowers   = findViewById(R.id.tvFollowersCount)
-        tvFollowing   = findViewById(R.id.tvFollowingCount)
-        btnConnect    = findViewById(R.id.btnConnect)
-        btnMessage    = findViewById(R.id.btnMessageUser)
-
+        tvAvatar        = findViewById(R.id.tvUserAvatar)
+        imgProfilePhoto  = findViewById(R.id.imgUserProfilePhoto)
+        tvName          = findViewById(R.id.tvUserName)
+        tvRole          = findViewById(R.id.tvUserRole)
+        tvBio           = findViewById(R.id.tvUserBio)
+        tvSkills        = findViewById(R.id.tvUserSkills)
+        tvConnections   = findViewById(R.id.tvUserConnectionCount)
+        btnConnect      = findViewById(R.id.btnConnect)
+        btnMessage      = findViewById(R.id.btnMessageUser)
         layoutConnections = findViewById(R.id.layoutUserConnections)
-        layoutFollowers   = findViewById(R.id.layoutFollowers)
-        layoutFollowing   = findViewById(R.id.layoutFollowing)
 
-        btnConnect.setOnClickListener  { handleConnectClick() }
-        btnMessage.setOnClickListener  {
+        btnConnect.setOnClickListener { handleConnectClick() }
+        btnMessage.setOnClickListener {
             startActivity(Intent(this, ChatActivity::class.java)
                 .putExtra("receiverId", userId)
                 .putExtra("receiverName", targetUserName.ifBlank { "User" }))
         }
 
-        // Tapping stats opens ConnectionsActivity with appropriate tab
+        // Tapping connections count opens ConnectionsActivity
         layoutConnections.setOnClickListener {
             startActivity(Intent(this, ConnectionsActivity::class.java)
                 .putExtra("userId", userId))
-        }
-        layoutFollowers.setOnClickListener {
-            startActivity(Intent(this, ConnectionsActivity::class.java)
-                .putExtra("userId", userId)
-                .putExtra("startTab", ConnectionsActivity.TAB_FOLLOWERS))
-        }
-        layoutFollowing.setOnClickListener {
-            startActivity(Intent(this, ConnectionsActivity::class.java)
-                .putExtra("userId", userId)
-                .putExtra("startTab", ConnectionsActivity.TAB_FOLLOWING))
         }
     }
 
@@ -139,12 +120,7 @@ class UserProfileActivity : AppCompatActivity() {
                 }
 
                 val connections = (doc.get("connections") as? List<*>) ?: emptyList<String>()
-                val followers   = (doc.get("followers")   as? List<*>) ?: emptyList<String>()
-                val following   = (doc.get("following")   as? List<*>) ?: emptyList<String>()
-
                 tvConnections.text = formatCount(connections.size)
-                tvFollowers.text   = formatCount(followers.size)
-                tvFollowing.text   = formatCount(following.size)
             }
     }
 

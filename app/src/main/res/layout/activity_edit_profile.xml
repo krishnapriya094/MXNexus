@@ -20,32 +20,51 @@
             app:navigationIcon="?attr/homeAsUpIndicator" />
 
         <!-- Profile Pic Section -->
-        <FrameLayout
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="32dp">
+            android:layout_marginBottom="16dp"
+            android:orientation="vertical"
+            android:gravity="center">
 
-            <ImageView
-                android:id="@+id/imgEditAvatar"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/ic_profile"
-                android:background="@drawable/circle_avatar"
-                android:scaleType="centerCrop" />
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnChangePic"
+                <ImageView
+                    android:id="@+id/imgEditAvatar"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_profile"
+                    android:background="@drawable/circle_avatar"
+                    android:scaleType="centerCrop" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnChangePic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    app:fabSize="mini"
+                    app:srcCompat="@android:drawable/ic_menu_camera"
+                    app:backgroundTint="@color/primary"
+                    app:tint="#FFFFFF"
+                    android:visibility="visible" />
+            </FrameLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRemoveProfilePic"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                app:fabSize="mini"
-                app:srcCompat="@android:drawable/ic_menu_camera"
-                app:backgroundTint="@color/primary"
-                app:tint="#FFFFFF"
-                android:visibility="visible" />
-        </FrameLayout>
+                android:layout_marginTop="8dp"
+                android:text="Remove Photo"
+                android:textColor="@color/danger_red"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <!-- Basic Info -->
         <com.google.android.material.textfield.TextInputLayout

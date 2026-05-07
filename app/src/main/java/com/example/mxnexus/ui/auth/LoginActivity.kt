@@ -14,6 +14,7 @@ import com.example.mxnexus.R
 import com.example.mxnexus.MainActivity
 import com.example.mxnexus.service.MXNexusFirebaseMessagingService
 import com.example.mxnexus.ui.admin.AdminDashboardActivity
+import com.example.mxnexus.ui.auth.PendingApprovalActivity
 
 class LoginActivity : AppCompatActivity() {
 
@@ -86,24 +87,41 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun checkUserRoleAndRedirect(uid: String) {
-        Log.d("LoginActivity", "checkUserRoleAndRedirect: fetching role for $uid")
         db.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
                 showLoading(false)
-                // Save / refresh FCM token for this device
                 MXNexusFirebaseMessagingService.saveFcmToken(uid)
+
                 val isAdmin = doc.getBoolean("isAdmin") ?: false
-                if (isAdmin) {
-                    startActivity(Intent(this, AdminDashboardActivity::class.java))
-                } else {
-                    startActivity(Intent(this, MainActivity::class.java))
+                val role    = doc.getString("role") ?: ""
+                val status  = doc.getString("status") ?: "approved"
+
+                when {
+                    isAdmin -> {
+                        startActivity(Intent(this, AdminDashboardActivity::class.java))
+                        finish()
+                    }
+                    role == "Alumni" && status == "pending_approval" -> {
+                        startActivity(Intent(this, PendingApprovalActivity::class.java))
+                        finish()
+                    }
+                    role == "Alumni" && status == "rejected" -> {
+                        // Sign out and show rejection dialog
+                        FirebaseAuth.getInstance().signOut()
+                        androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("Registration Rejected")
+                            .setMessage("Your alumni registration was not approved. Please contact your institution's administrator.")
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                    else -> {
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish()
+                    }
                 }
-                finish()
             }
             .addOnFailureListener { e ->
-                Log.e("LoginActivity", "checkUserRoleAndRedirect: failure", e)
                 showLoading(false)
-                // Fallback to main if firestore fails
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             }

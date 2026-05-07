@@ -12,7 +12,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.mxnexus.R
-import com.example.mxnexus.MainActivity
+import com.example.mxnexus.ui.auth.PendingApprovalActivity
 
 class RegisterAlumniActivity : AppCompatActivity() {
 
@@ -134,15 +134,20 @@ class RegisterAlumniActivity : AppCompatActivity() {
                     "designation" to designation,
                     "gradYear" to gradYear,
                     "bio" to bio,
-                    "profileImageUrl" to ""
+                    "profileImageUrl" to "",
+                    "status" to "pending_approval"   // ← must be approved by admin
                 )
 
                 db.collection("users").document(userId)
                     .set(user)
                     .addOnSuccessListener {
                         showLoading(false)
-                        Toast.makeText(this, "Account created!", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this, MainActivity::class.java))
+                        Toast.makeText(
+                            this,
+                            "Registration submitted! Please wait for admin approval.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        startActivity(Intent(this, PendingApprovalActivity::class.java))
                         finishAffinity()
                     }
                     .addOnFailureListener {

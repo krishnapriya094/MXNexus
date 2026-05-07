@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mxnexus.R
@@ -26,10 +27,12 @@ class ManagePostsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_manage_admin)
 
         db = FirebaseFirestore.getInstance()
-        
-        findViewById<TextView>(R.id.manageAdminToolbar).apply {
-            text = "Manage All Posts"
-        }
+
+        val toolbar = findViewById<Toolbar>(R.id.manageAdminToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "Manage All Posts"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
 
         rvPosts = findViewById(R.id.rvAdminList)
         rvPosts.layoutManager = LinearLayoutManager(this)

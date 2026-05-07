@@ -37,16 +37,19 @@ class EditProfileActivity : AppCompatActivity() {
     private lateinit var tilDetail3: TextInputLayout
     private lateinit var btnSave: MaterialButton
     private lateinit var btnChangePic: FloatingActionButton
+    private lateinit var btnRemovePic: MaterialButton
     private lateinit var progressBar: ProgressBar
 
     private var userRole: String = ""
     private var selectedImageUri: Uri? = null
+    private var currentPhotoUrl: String = ""   // tracks the saved photo URL
 
     // Image Picker Launcher
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             selectedImageUri = it
             Glide.with(this).load(it).circleCrop().into(imgAvatar)
+            btnRemovePic.visibility = View.VISIBLE   // show remove once a photo is selected
         }
     }
 
@@ -64,23 +67,25 @@ class EditProfileActivity : AppCompatActivity() {
         bindViews()
         loadCurrentData()
 
-        btnChangePic.setOnClickListener { imagePickerLauncher.launch("image/*") }
-        btnSave.setOnClickListener { saveChanges() }
+        btnChangePic.setOnClickListener  { imagePickerLauncher.launch("image/*") }
+        btnRemovePic.setOnClickListener  { removeProfilePicture() }
+        btnSave.setOnClickListener       { saveChanges() }
     }
 
     private fun bindViews() {
-        imgAvatar   = findViewById(R.id.imgEditAvatar)
+        imgAvatar    = findViewById(R.id.imgEditAvatar)
         btnChangePic = findViewById(R.id.btnChangePic)
-        etName      = findViewById(R.id.etEditName)
-        etBio       = findViewById(R.id.etEditBio)
-        etDetail1   = findViewById(R.id.etEditDetail1)
-        etDetail2   = findViewById(R.id.etEditDetail2)
-        etDetail3   = findViewById(R.id.etEditDetail3)
-        tilDetail1  = findViewById(R.id.tilDetail1)
-        tilDetail2  = findViewById(R.id.tilDetail2)
-        tilDetail3  = findViewById(R.id.tilDetail3)
-        btnSave     = findViewById(R.id.btnSaveProfile)
-        progressBar = findViewById(R.id.editProgressBar)
+        btnRemovePic = findViewById(R.id.btnRemoveProfilePic)
+        etName       = findViewById(R.id.etEditName)
+        etBio        = findViewById(R.id.etEditBio)
+        etDetail1    = findViewById(R.id.etEditDetail1)
+        etDetail2    = findViewById(R.id.etEditDetail2)
+        etDetail3    = findViewById(R.id.etEditDetail3)
+        tilDetail1   = findViewById(R.id.tilDetail1)
+        tilDetail2   = findViewById(R.id.tilDetail2)
+        tilDetail3   = findViewById(R.id.tilDetail3)
+        btnSave      = findViewById(R.id.btnSaveProfile)
+        progressBar  = findViewById(R.id.editProgressBar)
     }
 
     private fun loadCurrentData() {
@@ -95,9 +100,13 @@ class EditProfileActivity : AppCompatActivity() {
                 etName.setText(doc.getString("name"))
                 etBio.setText(doc.getString("bio"))
 
-                val photoUrl = doc.getString("profileImageUrl")
-                if (!photoUrl.isNullOrEmpty()) {
+                val photoUrl = doc.getString("profileImageUrl") ?: ""
+                currentPhotoUrl = photoUrl
+                if (photoUrl.isNotEmpty()) {
                     Glide.with(this).load(photoUrl).circleCrop().into(imgAvatar)
+                    btnRemovePic.visibility = View.VISIBLE
+                } else {
+                    btnRemovePic.visibility = View.GONE
                 }
 
                 if (userRole == "Student") {
@@ -120,6 +129,7 @@ class EditProfileActivity : AppCompatActivity() {
         }
     }
 
+    /** Upload selected image to Cloudinary then save URL to Firestore */
     private fun uploadImageAndSave() {
         val bytes = contentResolver.openInputStream(selectedImageUri!!)?.use { it.readBytes() }
         if (bytes == null) {
@@ -128,7 +138,6 @@ class EditProfileActivity : AppCompatActivity() {
         }
 
         showLoading(true)
-
         lifecycleScope.launch {
             try {
                 val url = CloudinaryUploader.upload(bytes, folder = "profile_pics")
@@ -138,6 +147,33 @@ class EditProfileActivity : AppCompatActivity() {
                 Toast.makeText(this@EditProfileActivity, "Upload failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    /** Remove the profile picture — clears the image in UI and sets profileImageUrl = "" in Firestore */
+    private fun removeProfilePicture() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Remove Photo")
+            .setMessage("Are you sure you want to remove your profile picture?")
+            .setPositiveButton("Remove") { _, _ ->
+                val uid = auth.currentUser?.uid ?: return@setPositiveButton
+                showLoading(true)
+                db.collection("users").document(uid)
+                    .update("profileImageUrl", "")
+                    .addOnSuccessListener {
+                        showLoading(false)
+                        currentPhotoUrl = ""
+                        selectedImageUri = null
+                        imgAvatar.setImageResource(R.drawable.ic_profile)
+                        btnRemovePic.visibility = View.GONE
+                        Toast.makeText(this, "Profile photo removed", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener {
+                        showLoading(false)
+                        Toast.makeText(this, "Failed to remove photo", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun updateFirestore(newPhotoUrl: String?) {
