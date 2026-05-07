@@ -196,7 +196,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Login"
-                android:textColor="#6200EE"
+                android:textColor="@color/primary"
                 android:textStyle="bold"/>
         </LinearLayout>
 

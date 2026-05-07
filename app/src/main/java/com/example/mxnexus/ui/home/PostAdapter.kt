@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -28,6 +29,8 @@ class PostAdapter(
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val layoutAvatar: View       = itemView.findViewById(R.id.layoutPostAvatar)
+        val tvAvatarInitial: TextView = itemView.findViewById(R.id.tvPostAvatarInitial)
         val imgAvatar: ImageView     = itemView.findViewById(R.id.imgPostAvatar)
         val tvUserName: TextView     = itemView.findViewById(R.id.tvPostUserName)
         val tvUserRole: TextView     = itemView.findViewById(R.id.tvPostRole)
@@ -62,18 +65,22 @@ class PostAdapter(
         holder.tvContent.text   = post.content
 
         // Profile click (avatar + name)
-        holder.imgAvatar.setOnClickListener  { onProfileClick?.invoke(post.userId) }
+        holder.layoutAvatar.setOnClickListener  { onProfileClick?.invoke(post.userId) }
         holder.tvUserName.setOnClickListener { onProfileClick?.invoke(post.userId) }
 
         // Avatar
         if (post.profileImageUrl.isNotBlank()) {
+            holder.imgAvatar.visibility = View.VISIBLE
+            holder.tvAvatarInitial.visibility = View.GONE
             Glide.with(ctx)
                 .load(post.profileImageUrl)
                 .apply(RequestOptions.circleCropTransform())
                 .placeholder(R.drawable.ic_profile)
                 .into(holder.imgAvatar)
         } else {
-            holder.imgAvatar.setImageResource(R.drawable.ic_profile)
+            holder.imgAvatar.visibility = View.GONE
+            holder.tvAvatarInitial.visibility = View.VISIBLE
+            holder.tvAvatarInitial.text = post.userName.firstOrNull()?.uppercase() ?: "U"
         }
 
         // ── Post image ─────────────────────────────────────────────────────────
@@ -81,7 +88,7 @@ class PostAdapter(
             holder.imgPostPhoto.visibility = View.VISIBLE
             Glide.with(ctx)
                 .load(post.imageUrl)
-                .apply(RequestOptions().transform(RoundedCorners(16)))
+                .apply(RequestOptions().transform(RoundedCorners(24)))
                 .into(holder.imgPostPhoto)
             holder.imgPostPhoto.setOnClickListener { onImageClick?.invoke(post.imageUrl) }
         } else {
@@ -120,8 +127,23 @@ class PostAdapter(
     override fun getItemCount() = posts.size
 
     fun updatePosts(newPosts: List<Post>) {
+        val diff = DiffUtil.calculateDiff(PostDiffCallback(posts, newPosts))
         posts.clear()
         posts.addAll(newPosts)
-        notifyDataSetChanged()
+        diff.dispatchUpdatesTo(this)
+    }
+
+    // ── DiffUtil ──────────────────────────────────────────────────────────────
+
+    private class PostDiffCallback(
+        private val old: List<Post>,
+        private val new: List<Post>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize() = old.size
+        override fun getNewListSize() = new.size
+        override fun areItemsTheSame(oldPos: Int, newPos: Int) =
+            old[oldPos].postId == new[newPos].postId
+        override fun areContentsTheSame(oldPos: Int, newPos: Int) =
+            old[oldPos] == new[newPos]
     }
 }

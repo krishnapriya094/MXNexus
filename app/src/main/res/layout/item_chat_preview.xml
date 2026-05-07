@@ -60,7 +60,7 @@
                 android:text="User Name"
                 android:textStyle="bold"
                 android:textSize="15sp"
-                android:textColor="#1A1A2E"
+                android:textColor="@color/text_dark"
                 android:maxLines="1"
                 android:ellipsize="end"/>
 
@@ -69,7 +69,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="now"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/text_hint"
                 android:textSize="11sp"
                 android:layout_marginStart="8dp"/>
 
@@ -81,7 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:layout_marginTop="1dp"/>
 
@@ -99,7 +99,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="No messages yet"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:textSize="13sp"
                 android:maxLines="1"
                 android:ellipsize="end"/>

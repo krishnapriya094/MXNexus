@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FAFAFA">
+    android:background="@color/background">
 
     <!-- Header -->
     <LinearLayout
@@ -12,19 +12,19 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:paddingHorizontal="20dp"
-        android:paddingTop="20dp"
+        android:paddingTop="16dp"
         android:paddingBottom="12dp"
         android:gravity="center_vertical"
-        android:background="#FFFFFF">
+        android:background="@color/background">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Messages"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="#1A1A2E"
+            android:textColor="@color/text_dark"
             android:fontFamily="sans-serif-medium"/>
 
         <ImageView
@@ -47,7 +47,7 @@
         android:paddingHorizontal="16dp"
         android:paddingBottom="12dp"
         android:paddingTop="4dp"
-        android:background="#FFFFFF">
+        android:background="@color/background">
 
         <EditText
             android:id="@+id/etSearchMessages"
@@ -56,8 +56,8 @@
             android:background="@drawable/search_bar_bg"
             android:paddingHorizontal="16dp"
             android:hint="Search messages..."
-            android:textColorHint="#AAAAAA"
-            android:textColor="#1A1A2E"
+            android:textColorHint="@color/text_hint"
+            android:textColor="@color/text_dark"
             android:textSize="14sp"
             android:drawableStart="@drawable/ic_search"
             android:drawablePadding="8dp"
@@ -70,7 +70,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#F0F0F0"/>
+        android:background="@color/card_stroke"/>
 
     <!-- Chat List -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -89,8 +89,7 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- Empty State (overlaid via FrameLayout isn't possible in LinearLayout;
-         visibility toggled in code) -->
+    <!-- Empty State -->
     <LinearLayout
         android:id="@+id/tvMessagesEmpty"
         android:layout_width="match_parent"
@@ -105,7 +104,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="💬"
-            android:textSize="56sp"
+            android:textSize="48sp"
             android:gravity="center"/>
 
         <TextView
@@ -113,8 +112,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="No messages yet"
-            android:textColor="#1A1A2E"
-            android:textSize="18sp"
+            android:textColor="@color/text_dark"
+            android:textSize="17sp"
             android:textStyle="bold"
             android:gravity="center"
             android:layout_marginTop="16dp"/>
@@ -123,8 +122,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Start a conversation from someone's profile!"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
+            android:textColor="@color/text_hint"
+            android:textSize="13sp"
             android:gravity="center"
             android:layout_marginTop="8dp"/>
 

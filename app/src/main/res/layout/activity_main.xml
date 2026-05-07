@@ -4,39 +4,58 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="@color/background"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:elevation="0dp"
-        app:elevation="0dp"
-        android:background="#FFFFFF">
+        android:elevation="2dp"
+        app:elevation="2dp"
+        android:background="@color/background">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="#FFFFFF">
+            android:layout_height="56dp"
+            android:background="@color/background">
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <ImageView
-                    android:id="@+id/btnToolbarNotifications"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                <!-- Notification bell with ripple -->
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:src="@drawable/ic_notification"
-                    app:tint="@color/primary"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true" />
+                    android:layout_centerVertical="true">
 
+                    <ImageView
+                        android:id="@+id/btnToolbarNotifications"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_notification"
+                        app:tint="@color/text_dark"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <View
+                        android:id="@+id/notificationBadge"
+                        android:layout_width="9dp"
+                        android:layout_height="9dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/badge_circle"
+                        android:visibility="gone" />
+
+                </FrameLayout>
+
+                <!-- Branding -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -44,38 +63,30 @@
                     android:text="MX NEXUS"
                     android:textStyle="bold"
                     android:textSize="18sp"
-                    android:textColor="#FF00CC"
-                    android:letterSpacing="0.1" />
-                
-                <View
-                    android:id="@+id/notificationBadge"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:layout_toEndOf="@id/btnToolbarNotifications"
-                    android:layout_alignTop="@id/btnToolbarNotifications"
-                    android:layout_marginStart="-8dp"
-                    android:background="@drawable/badge_circle"
-                    android:visibility="gone" />
+                    android:textColor="@color/primary"
+                    android:letterSpacing="0.15"
+                    android:fontFamily="sans-serif-medium" />
 
             </RelativeLayout>
 
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- Bottom Navigation — elevated with subtle shadow -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
-        android:paddingBottom="4dp"
-        app:elevation="16dp"
+        android:background="@color/background"
+        app:elevation="8dp"
         app:menu="@menu/bottom_nav_menu"
-        app:itemIconTint="@color/primary"
-        app:itemTextColor="@color/primary"
+        app:itemIconTint="@color/text_secondary"
+        app:itemTextColor="@color/text_secondary"
         app:labelVisibilityMode="labeled"
-        app:itemRippleColor="#F3E5F5"
-        app:itemActiveIndicatorStyle="@null" />
+        app:itemRippleColor="@color/ripple_primary"
+        app:itemActiveIndicatorStyle="@null"
+        app:itemIconSize="24dp" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/navHostFragment"

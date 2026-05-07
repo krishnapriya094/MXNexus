@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.bumptech.glide.Glide
 import com.example.mxnexus.R
-import com.example.mxnexus. util.TimeUtils
+import com.example.mxnexus.util.TimeUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
@@ -48,6 +48,16 @@ class CreatePostActivity : AppCompatActivity() {
     private var hasAttachedDemoImage: Boolean = false
     private var scheduledTimestamp: Timestamp? = null
     private var currentUserName: String = ""
+    private var selectedImageUri: android.net.Uri? = null
+
+    private val imagePickerLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            selectedImageUri = it
+            hasAttachedDemoImage = true
+            frameImagePreview.visibility = View.VISIBLE
+            Glide.with(this).load(it).into(imgPreview)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +83,7 @@ class CreatePostActivity : AppCompatActivity() {
         btnSchedule       = findViewById(R.id.btnSchedule)
         btnPost           = findViewById(R.id.btnPost)
         
-        btnAttachPhoto.text = "Attach Image (Demo)"
+        btnAttachPhoto.text = "Attach Image"
     }
 
     private fun setupToolbar() {
@@ -98,6 +108,7 @@ class CreatePostActivity : AppCompatActivity() {
         btnAttachPhoto.setOnClickListener { handleDemoImageSelected() }
         btnRemoveImage.setOnClickListener {
             hasAttachedDemoImage = false
+            selectedImageUri = null
             frameImagePreview.visibility = View.GONE
         }
         btnSchedule.setOnClickListener { showDateTimePicker() }
@@ -105,10 +116,7 @@ class CreatePostActivity : AppCompatActivity() {
     }
 
     private fun handleDemoImageSelected() {
-        hasAttachedDemoImage = true
-        frameImagePreview.visibility = View.VISIBLE
-        val demoUrl = "https://picsum.photos/400?random=${System.currentTimeMillis()}"
-        Glide.with(this).load(demoUrl).into(imgPreview)
+        imagePickerLauncher.launch("image/*")
     }
 
     private fun showDateTimePicker() {
@@ -139,16 +147,57 @@ class CreatePostActivity : AppCompatActivity() {
          }
 
          btnPost.isEnabled = false
-         val imageUrl = if (hasAttachedDemoImage) "https://picsum.photos/400?random=${System.currentTimeMillis()}" else ""
-         val uid = auth.currentUser?.uid
+         progressUpload.visibility = View.VISIBLE
+         tvUploadStatus.visibility = View.VISIBLE
+         tvUploadStatus.text = "Uploading..."
 
+         val uid = auth.currentUser?.uid
          if (uid == null) {
              btnPost.isEnabled = true
+             progressUpload.visibility = View.GONE
+             tvUploadStatus.visibility = View.GONE
              Toast.makeText(this, "You must be logged in to post", Toast.LENGTH_SHORT).show()
              return
          }
 
-         // Fetch user details for complete post data
+         if (selectedImageUri != null) {
+             val storageRef = com.google.firebase.storage.FirebaseStorage.getInstance().reference
+             val imageRef = storageRef.child("post_images/${uid}_${System.currentTimeMillis()}.jpg")
+             
+             val bytes = contentResolver.openInputStream(selectedImageUri!!)?.use { it.readBytes() }
+             if (bytes == null) {
+                 btnPost.isEnabled = true
+                 progressUpload.visibility = View.GONE
+                 tvUploadStatus.visibility = View.GONE
+                 Toast.makeText(this, "Could not read image file", Toast.LENGTH_LONG).show()
+                 return
+             }
+
+             val uploadTask = imageRef.putBytes(bytes)
+             
+             uploadTask.continueWithTask { task ->
+                 if (!task.isSuccessful) {
+                     task.exception?.let { throw it }
+                 }
+                 imageRef.downloadUrl
+             }.addOnCompleteListener { task ->
+                 if (task.isSuccessful) {
+                     val downloadUri = task.result.toString()
+                     savePostToFirestore(uid, caption, downloadUri)
+                 } else {
+                     btnPost.isEnabled = true
+                     progressUpload.visibility = View.GONE
+                     tvUploadStatus.visibility = View.GONE
+                     Toast.makeText(this, "Image upload failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                 }
+             }
+         } else {
+             savePostToFirestore(uid, caption, "")
+         }
+     }
+
+     private fun savePostToFirestore(uid: String, caption: String, imageUrl: String) {
+         tvUploadStatus.text = "Saving post..."
          db.collection("users").document(uid).get().addOnSuccessListener { doc ->
              val userName = doc.getString("name") ?: "Unknown"
              val userRole = doc.getString("role") ?: "Student"
@@ -169,27 +218,27 @@ class CreatePostActivity : AppCompatActivity() {
 
              db.collection("posts").add(post)
                  .addOnSuccessListener { postRef ->
-                     // Save the postId in the document itself for easier reference
                      postRef.update("postId", postRef.id)
                          .addOnSuccessListener {
-                             android.util.Log.d("CreatePost", "Post created successfully with ID: ${postRef.id}")
+                             progressUpload.visibility = View.GONE
+                             tvUploadStatus.visibility = View.GONE
                              Toast.makeText(this, "Post created!", Toast.LENGTH_SHORT).show()
                              finish()
                          }
                          .addOnFailureListener { e ->
-                             // Even if update fails, post was created, so dismiss activity
-                             android.util.Log.w("CreatePost", "Post created but ID save failed", e)
                              finish()
                          }
                  }
                  .addOnFailureListener { e ->
                      btnPost.isEnabled = true
-                     android.util.Log.e("CreatePost", "Failed to create post", e)
+                     progressUpload.visibility = View.GONE
+                     tvUploadStatus.visibility = View.GONE
                      Toast.makeText(this, "Failed to post: ${e.message}", Toast.LENGTH_SHORT).show()
                  }
          }.addOnFailureListener { e ->
              btnPost.isEnabled = true
-             android.util.Log.e("CreatePost", "Failed to fetch user data", e)
+             progressUpload.visibility = View.GONE
+             tvUploadStatus.visibility = View.GONE
              Toast.makeText(this, "Failed to fetch user data: ${e.message}", Toast.LENGTH_SHORT).show()
          }
      }

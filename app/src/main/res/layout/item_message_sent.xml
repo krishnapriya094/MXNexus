@@ -17,7 +17,7 @@
             android:id="@+id/tvMessageSent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/gradient_avatar_bg"
+            android:background="@drawable/bg_chat_sent"
             android:padding="12dp"
             android:text="Sent message"
             android:textColor="#FFFFFF"

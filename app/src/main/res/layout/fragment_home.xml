@@ -4,26 +4,30 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="@color/surface_variant">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPosts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="8dp"
+        android:paddingTop="4dp"
         android:paddingBottom="80dp"
         android:clipToPadding="false"
-        android:background="#FFFFFF"/>
+        android:background="@color/surface_variant"
+        android:scrollbars="none"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreatePost"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/primary"
-        app:tint="#FFFFFF"
-        app:elevation="4dp" />
+        app:tint="@color/text_on_primary"
+        app:elevation="6dp"
+        app:fabSize="normal"
+        app:shapeAppearanceOverlay="@style/RoundedCorners" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

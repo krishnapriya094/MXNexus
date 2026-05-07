@@ -14,6 +14,8 @@ import com.google.firebase.firestore.FirebaseFirestore
  * Layout: item_chat_preview.xml
  * IDs: tvChatInitial, tvChatName, tvChatRole, tvChatLastMessage,
  *      tvChatTime, tvUnreadCount, viewOnlineDot
+ *
+ * Uses an in-memory cache to avoid redundant Firestore profile fetches on scroll.
  */
 class ChatPreviewAdapter(
     private val list: List<Map<String, Any>>,
@@ -25,6 +27,9 @@ class ChatPreviewAdapter(
     companion object {
         private const val TAG = "ChatPreviewAdapter"
     }
+
+    /** Simple in-memory cache: userId → {name, role, lastActive} */
+    private val profileCache = mutableMapOf<String, Map<String, Any?>>()
 
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val tvInitial: TextView  = v.findViewById(R.id.tvChatInitial)
@@ -58,49 +63,69 @@ class ChatPreviewAdapter(
             if (unread > 0) {
                 holder.tvUnread.visibility = View.VISIBLE
                 holder.tvUnread.text = if (unread > 99) "99+" else unread.toString()
-                // Bold last message if unread
                 holder.tvLastMsg.setTextColor(0xFF1A1A2E.toInt())
             } else {
                 holder.tvUnread.visibility = View.GONE
                 holder.tvLastMsg.setTextColor(0xFF888888.toInt())
             }
 
-            // Placeholder while fetching
-            holder.tvName.text    = "..."
-            holder.tvInitial.text = "?"
-            holder.tvRole.text    = ""
-            holder.onlineDot.visibility = View.GONE
+            // Check cache first
+            val cached = profileCache[receiverId]
+            if (cached != null) {
+                bindProfile(holder, receiverId, cached)
+            } else {
+                // Placeholder while fetching
+                holder.tvName.text    = "..."
+                holder.tvInitial.text = "?"
+                holder.tvRole.text    = ""
+                holder.onlineDot.visibility = View.GONE
 
-            // Fetch receiver profile
-            db.collection("users").document(receiverId).get()
-                .addOnSuccessListener { doc ->
-                    if (doc == null || !doc.exists()) return@addOnSuccessListener
-                    val name = doc.getString("name") ?: "User"
-                    val role = doc.getString("role") ?: ""
-
-                    holder.tvName.text    = name
-                    holder.tvInitial.text = name.firstOrNull()?.uppercase() ?: "U"
-                    holder.tvRole.text    = role
-
-                    // Online: last active within 5 minutes
-                    val lastActive = doc.getLong("lastActive") ?: 0L
-                    val isOnline = (System.currentTimeMillis() - lastActive) < 5 * 60 * 1000L
-                    holder.onlineDot.visibility = if (isOnline) View.VISIBLE else View.GONE
-
-                    holder.itemView.setOnClickListener { onClick(receiverId, name) }
-                }
-                .addOnFailureListener { e ->
-                    Log.w(TAG, "Could not fetch user $receiverId", e)
-                    holder.tvName.text    = "User"
-                    holder.tvInitial.text = "U"
-                    holder.itemView.setOnClickListener { onClick(receiverId, "User") }
-                }
+                // Fetch receiver profile and cache it
+                db.collection("users").document(receiverId).get()
+                    .addOnSuccessListener { doc ->
+                        if (doc == null || !doc.exists()) return@addOnSuccessListener
+                        val profile = mapOf<String, Any?>(
+                            "name"       to (doc.getString("name") ?: "User"),
+                            "role"       to (doc.getString("role") ?: ""),
+                            "lastActive" to (doc.getLong("lastActive") ?: 0L)
+                        )
+                        profileCache[receiverId] = profile
+                        bindProfile(holder, receiverId, profile)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w(TAG, "Could not fetch user $receiverId", e)
+                        holder.tvName.text    = "User"
+                        holder.tvInitial.text = "U"
+                        holder.itemView.setOnClickListener { onClick(receiverId, "User") }
+                    }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error binding position $position", e)
         }
     }
 
+    private fun bindProfile(holder: ViewHolder, receiverId: String, profile: Map<String, Any?>) {
+        val name = profile["name"]?.toString() ?: "User"
+        val role = profile["role"]?.toString() ?: ""
+
+        holder.tvName.text    = name
+        holder.tvInitial.text = name.firstOrNull()?.uppercase() ?: "U"
+        holder.tvRole.text    = role
+
+        // Online: last active within 5 minutes
+        val lastActive = (profile["lastActive"] as? Long) ?: 0L
+        val isOnline = (System.currentTimeMillis() - lastActive) < 5 * 60 * 1000L
+        holder.onlineDot.visibility = if (isOnline) View.VISIBLE else View.GONE
+
+        holder.itemView.setOnClickListener { onClick(receiverId, name) }
+    }
+
     override fun getItemCount(): Int = list.size
+
+    /** Clear cache when data is refreshed to pick up profile changes */
+    fun clearProfileCache() {
+        profileCache.clear()
+    }
 
     private fun formatTime(ts: Long): String {
         if (ts == 0L) return ""

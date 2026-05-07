@@ -136,25 +136,31 @@ class EditProfileActivity : AppCompatActivity() {
         val storageRef = storage.reference
         val profilePicRef = storageRef.child("profile_pics/$uid.jpg")
 
-        profilePicRef.putFile(selectedImageUri!!)
-            .addOnSuccessListener { taskSnapshot ->
-                android.util.Log.d("EditProfile", "Upload success. Path: ${taskSnapshot.metadata?.path}")
-                
-                // Fetch URL with a slight delay or retry if needed, but let's try direct first
-                profilePicRef.downloadUrl.addOnSuccessListener { uri ->
-                    android.util.Log.d("EditProfile", "Download URL success: $uri")
-                    updateFirestore(uri.toString())
-                }.addOnFailureListener { e ->
-                    android.util.Log.e("EditProfile", "URL fetch failed", e)
-                    showLoading(false)
-                    Toast.makeText(this, "Link error: ${e.message}", Toast.LENGTH_LONG).show()
-                }
+        val bytes = contentResolver.openInputStream(selectedImageUri!!)?.use { it.readBytes() }
+        if (bytes == null) {
+            showLoading(false)
+            Toast.makeText(this, "Could not read image file", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val uploadTask = profilePicRef.putBytes(bytes)
+        
+        uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let { throw it }
             }
-            .addOnFailureListener { e ->
-                android.util.Log.e("EditProfile", "Upload failed", e)
+            profilePicRef.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val downloadUri = task.result
+                android.util.Log.d("EditProfile", "Download URL success: $downloadUri")
+                updateFirestore(downloadUri.toString())
+            } else {
+                android.util.Log.e("EditProfile", "Upload failed", task.exception)
                 showLoading(false)
-                Toast.makeText(this, "Upload failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Upload failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
             }
+        }
     }
 
     private fun updateFirestore(newPhotoUrl: String?) {
