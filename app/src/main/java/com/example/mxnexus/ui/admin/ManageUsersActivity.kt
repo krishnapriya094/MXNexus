@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mxnexus.R
@@ -25,6 +26,13 @@ class ManageUsersActivity : AppCompatActivity() {
         setContentView(R.layout.activity_manage_admin)
 
         db = FirebaseFirestore.getInstance()
+
+        val toolbar = findViewById<Toolbar>(R.id.manageAdminToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "Manage Users"
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
+
         rvUsers = findViewById(R.id.rvAdminList)
         rvUsers.layoutManager = LinearLayoutManager(this)
 

@@ -93,9 +93,15 @@ class ManagePostsActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(h: ViewHolder, p: Int) {
             val post = list[p]
-            // Updated keys to match the new rules: caption and username
-            h.content.text = post["caption"]?.toString() ?: "No content"
-            h.author.text = "By: ${post["username"] ?: "Unknown"}"
+            // Correct field names matching CreatePostActivity schema
+            val content   = post["content"]?.toString()?.takeIf { it.isNotBlank() } ?: "[Image only post]"
+            val userName  = post["userName"]?.toString() ?: "Unknown"
+            val userRole  = post["userRole"]?.toString() ?: ""
+            val likes     = post["likeCount"]?.toString() ?: "0"
+            val comments  = post["commentCount"]?.toString() ?: "0"
+
+            h.content.text = content
+            h.author.text  = "By: $userName${if (userRole.isNotBlank()) " (• $userRole)" else ""}  ❤ $likes  💬 $comments"
             h.btn.setOnClickListener { onDelete(post["id"].toString()) }
         }
 
