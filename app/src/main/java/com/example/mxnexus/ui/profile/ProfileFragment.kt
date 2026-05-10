@@ -66,7 +66,6 @@ class ProfileFragment : Fragment() {
         btnPendingRequests = view.findViewById(R.id.btnPendingRequests)
         btnEditProfile = view.findViewById(R.id.btnEditProfile)
         btnLogout = view.findViewById(R.id.btnLogout)
-        btnSettings = view.findViewById(R.id.btnSettings)
         imgProfileAvatar = view.findViewById(R.id.imgProfileMainAvatar)
 
         loadProfile()
@@ -76,9 +75,7 @@ class ProfileFragment : Fragment() {
             startActivity(Intent(requireContext(), EditProfileActivity::class.java))
         }
 
-        btnSettings.setOnClickListener {
-            startActivity(Intent(requireContext(), SettingsActivity::class.java))
-        }
+
 
         btnPendingRequests.setOnClickListener {
             startActivity(Intent(requireContext(), PendingRequestsActivity::class.java))

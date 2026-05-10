@@ -48,7 +48,6 @@ class PostAdapter(
         val btnComment: LinearLayout = itemView.findViewById(R.id.btnPostComment)
         val tvCommentCount: TextView = itemView.findViewById(R.id.tvPostCommentCount)
         val btnMessage: ImageView    = itemView.findViewById(R.id.btnPostMessage)
-        val btnShare: ImageView      = itemView.findViewById(R.id.btnPostShare)
         val btnMore: ImageView       = itemView.findViewById(R.id.btnPostMore)
     }
 
@@ -143,7 +142,6 @@ class PostAdapter(
         holder.btnLike.setOnClickListener    { onLikeClick(post) }
         holder.tvCommentCount.text = post.commentCount.toString()
         holder.btnComment.setOnClickListener { onCommentClick(post) }
-        holder.btnShare.setOnClickListener   { onShareClick(post) }
 
         // ── Message button — only for other users when callback is set ─────────
         if (!isOwnPost && onMessageClick != null) {

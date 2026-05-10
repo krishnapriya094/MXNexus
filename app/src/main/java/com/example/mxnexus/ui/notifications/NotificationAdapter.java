@@ -3,10 +3,15 @@ package com.example.mxnexus.ui.notifications;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import com.example.mxnexus.R;
+import com.example.mxnexus.data.model.Notification;
+import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.List;
 import com.example.mxnexus.data.model.Notification;
 import java.util.List;
 
@@ -41,12 +46,35 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.tvMessage.setText(notification.getMessage());
         holder.tvTime.setText(getRelativeTime(notification.getTimestamp()));
 
-        // Set avatar initial based on sender name
+        // Default to initial
         String senderName = notification.getSenderName();
         if (senderName != null && !senderName.isEmpty()) {
             holder.tvInitial.setText(String.valueOf(senderName.charAt(0)).toUpperCase());
         } else {
-            holder.tvInitial.setText("?");
+            holder.tvInitial.setText("U");
+        }
+        holder.imgAvatar.setVisibility(View.GONE);
+        holder.tvInitial.setVisibility(View.VISIBLE);
+
+        // Fetch and load profile image
+        String senderId = notification.getSenderId();
+        if (senderId != null && !senderId.isEmpty()) {
+            FirebaseFirestore.getInstance().collection("users").document(senderId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String profileImageUrl = documentSnapshot.getString("profileImageUrl");
+                        if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                            if (holder.itemView.getContext() != null) {
+                                holder.imgAvatar.setVisibility(View.VISIBLE);
+                                holder.tvInitial.setVisibility(View.GONE);
+                                Glide.with(holder.itemView.getContext())
+                                    .load(profileImageUrl)
+                                    .circleCrop()
+                                    .into(holder.imgAvatar);
+                            }
+                        }
+                    }
+                });
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -81,10 +109,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     static class NotificationViewHolder extends RecyclerView.ViewHolder {
+        ImageView imgAvatar;
         TextView tvInitial, tvMessage, tvTime;
 
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
+            imgAvatar = itemView.findViewById(R.id.imgNotifAvatar);
             tvInitial = itemView.findViewById(R.id.tvNotifInitial);
             tvMessage = itemView.findViewById(R.id.tvNotificationMessage);
             tvTime    = itemView.findViewById(R.id.tvNotificationTime);

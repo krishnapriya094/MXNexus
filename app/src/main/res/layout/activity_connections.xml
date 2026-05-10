@@ -67,23 +67,7 @@
 
     </LinearLayout>
 
-    <!-- Tabs -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabConnections"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="#FFFFFF"
-        app:tabTextColor="#888888"
-        app:tabSelectedTextColor="#FF00CC"
-        app:tabIndicatorColor="#FF00CC"
-        app:tabIndicatorHeight="3dp"
-        app:tabMode="fixed"
-        app:tabGravity="fill"/>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#F0F0F0"/>
 
     <!-- List -->
     <androidx.recyclerview.widget.RecyclerView

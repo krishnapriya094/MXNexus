@@ -24,6 +24,8 @@ class QueryDetailActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     
     private lateinit var tvUserName: TextView
+    private lateinit var tvDetailInitial: TextView
+    private lateinit var imgDetailAvatar: android.widget.ImageView
     private lateinit var tvQuestion: TextView
     private lateinit var rvAnswers: RecyclerView
     private lateinit var layoutAlumniInput: LinearLayout
@@ -48,6 +50,8 @@ class QueryDetailActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
 
         tvUserName = findViewById(R.id.tvDetailUserName)
+        tvDetailInitial = findViewById(R.id.tvDetailInitial)
+        imgDetailAvatar = findViewById(R.id.imgDetailAvatar)
         tvQuestion = findViewById(R.id.tvDetailQuestion)
         rvAnswers = findViewById(R.id.rvAnswers)
         layoutAlumniInput = findViewById(R.id.layoutAlumniInput)
@@ -68,9 +72,24 @@ class QueryDetailActivity : AppCompatActivity() {
     private fun loadQueryDetails() {
         db.collection("queries").document(queryId).get().addOnSuccessListener { doc ->
             if (doc != null) {
-                tvUserName.text = doc.getString("userName")
+                val name = doc.getString("userName") ?: "User"
+                tvUserName.text = name
+                tvDetailInitial.text = name.firstOrNull()?.uppercase() ?: "U"
                 tvQuestion.text = doc.getString("question")
                 queryOwnerId = doc.getString("userId") ?: ""
+
+                if (queryOwnerId.isNotEmpty()) {
+                    db.collection("users").document(queryOwnerId).get().addOnSuccessListener { userDoc ->
+                        if (userDoc != null && userDoc.exists()) {
+                            val url = userDoc.getString("profileImageUrl")
+                            if (!url.isNullOrEmpty()) {
+                                imgDetailAvatar.visibility = View.VISIBLE
+                                tvDetailInitial.visibility = View.GONE
+                                com.bumptech.glide.Glide.with(this).load(url).circleCrop().into(imgDetailAvatar)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

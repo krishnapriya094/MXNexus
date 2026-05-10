@@ -17,15 +17,7 @@
             android:background="@drawable/gradient_profile_header"
             android:padding="20dp">
 
-            <ImageView
-                android:id="@+id/btnSettings"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_alignParentEnd="true"
-                android:src="@android:drawable/ic_menu_manage"
-                android:padding="6dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="#FFFFFF" />
+
 
             <LinearLayout
                 android:layout_width="match_parent"

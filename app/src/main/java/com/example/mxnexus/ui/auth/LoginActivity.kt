@@ -23,7 +23,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnLogin: MaterialButton
-    private lateinit var btnGoogle: MaterialButton
     private lateinit var progressBar: ProgressBar
     private lateinit var tvRegister: TextView
 
@@ -38,7 +37,6 @@ class LoginActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etLoginEmail)
         etPassword = findViewById(R.id.etLoginPassword)
         btnLogin = findViewById(R.id.btnLogin)
-        btnGoogle = findViewById(R.id.btnGoogleSignIn)
         progressBar = findViewById(R.id.loginProgressBar)
         tvRegister = findViewById(R.id.tvRegister)
 
@@ -51,10 +49,6 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btnLogin.setOnClickListener { attemptLogin() }
-
-        btnGoogle.setOnClickListener {
-            Toast.makeText(this, "Google Sign-In coming soon!", Toast.LENGTH_SHORT).show()
-        }
 
         tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterStep1Activity::class.java))

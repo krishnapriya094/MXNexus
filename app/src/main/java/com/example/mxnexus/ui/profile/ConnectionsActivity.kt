@@ -14,10 +14,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.mxnexus.R
 import com.example.mxnexus.ui.messages.ChatActivity
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.tabs.TabLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -30,10 +30,6 @@ class ConnectionsActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ConnectionsActivity"
-        const val TAB_FOLLOWERS   = 0
-        const val TAB_FOLLOWING   = 1
-        const val TAB_CONNECTIONS = 2
-        const val TAB_PENDING     = 3
     }
 
     private lateinit var db: FirebaseFirestore
@@ -42,7 +38,6 @@ class ConnectionsActivity : AppCompatActivity() {
     private lateinit var emptyLayout: LinearLayout
     private lateinit var tvEmpty: TextView
     private lateinit var etSearch: EditText
-    private lateinit var tabLayout: TabLayout
 
     private var targetUserId: String = ""
     private var currentUserId: String = ""
@@ -50,7 +45,6 @@ class ConnectionsActivity : AppCompatActivity() {
     private val allUsers     = mutableListOf<Map<String, Any>>()
     private val filteredUsers = mutableListOf<Map<String, Any>>()
     private lateinit var adapter: ConnectionAdapter
-    private var currentTab = TAB_CONNECTIONS
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,8 +56,7 @@ class ConnectionsActivity : AppCompatActivity() {
         targetUserId  = intent.getStringExtra("userId") ?: currentUserId
 
         initViews()
-        setupTabs()
-        loadTab(TAB_CONNECTIONS)
+        loadConnections()
     }
 
     private fun initViews() {
@@ -73,7 +66,6 @@ class ConnectionsActivity : AppCompatActivity() {
         emptyLayout   = findViewById(R.id.connectionsEmptyLayout)
         tvEmpty       = findViewById(R.id.tvConnectionsEmpty)
         etSearch      = findViewById(R.id.etSearchConnections)
-        tabLayout     = findViewById(R.id.tabConnections)
 
         rvConnections.layoutManager = LinearLayoutManager(this)
 
@@ -96,18 +88,7 @@ class ConnectionsActivity : AppCompatActivity() {
         })
     }
 
-    private fun setupTabs() {
-        listOf("Followers", "Following", "Connections", "Pending").forEach { tabLayout.addTab(tabLayout.newTab().setText(it)) }
-        tabLayout.selectTab(tabLayout.getTabAt(TAB_CONNECTIONS))
-
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) { currentTab = tab.position; loadTab(tab.position) }
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-        })
-    }
-
-    private fun loadTab(tab: Int) {
+    private fun loadConnections() {
         allUsers.clear()
         filteredUsers.clear()
         adapter.notifyDataSetChanged()
@@ -116,16 +97,9 @@ class ConnectionsActivity : AppCompatActivity() {
             .addOnSuccessListener { doc ->
                 if (isDestroyed || isFinishing || doc == null) return@addOnSuccessListener
 
-                val ids: List<String> = when (tab) {
-                    TAB_FOLLOWERS   -> (doc.get("followers")   as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
-                    TAB_FOLLOWING   -> (doc.get("following")   as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
-                    TAB_CONNECTIONS -> (doc.get("connections") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
-                    TAB_PENDING     -> emptyList() // handled separately
-                    else -> emptyList()
-                }
+                val ids: List<String> = (doc.get("connections") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
 
-                if (tab == TAB_PENDING) { loadPendingRequests(); return@addOnSuccessListener }
-                if (ids.isEmpty()) { showEmpty("Nothing here yet"); return@addOnSuccessListener }
+                if (ids.isEmpty()) { showEmpty("No connections yet"); return@addOnSuccessListener }
 
                 var loaded = 0
                 ids.forEach { uid ->
@@ -136,7 +110,8 @@ class ConnectionsActivity : AppCompatActivity() {
                                     "uid"  to uid,
                                     "name" to (u.getString("name") ?: "User"),
                                     "role" to (u.getString("role") ?: ""),
-                                    "bio"  to (u.getString("bio")  ?: "")
+                                    "bio"  to (u.getString("bio")  ?: ""),
+                                    "profileImageUrl" to (u.getString("profileImageUrl") ?: "")
                                 ))
                             }
                             loaded++
@@ -144,27 +119,7 @@ class ConnectionsActivity : AppCompatActivity() {
                         }
                 }
             }
-            .addOnFailureListener { Log.e(TAG, "loadTab error", it); showEmpty("Could not load") }
-    }
-
-    private fun loadPendingRequests() {
-        db.collection("connectionRequests")
-            .whereEqualTo("receiverId", currentUserId)
-            .whereEqualTo("status", "pending")
-            .get()
-            .addOnSuccessListener { snap ->
-                if (isDestroyed || isFinishing) return@addOnSuccessListener
-                if (snap.isEmpty) { showEmpty("No pending requests"); return@addOnSuccessListener }
-                snap.documents.forEach { req ->
-                    allUsers.add(mapOf(
-                        "uid"       to (req.getString("senderId") ?: ""),
-                        "name"      to (req.getString("senderName") ?: "User"),
-                        "role"      to (req.getString("senderRole") ?: ""),
-                        "requestId" to req.id
-                    ))
-                }
-                applyFilter("")
-            }
+            .addOnFailureListener { Log.e(TAG, "loadConnections error", it); showEmpty("Could not load") }
     }
 
     private fun applyFilter(query: String) {
@@ -198,6 +153,7 @@ class ConnectionsActivity : AppCompatActivity() {
 
         class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
             val tvInitial: TextView       = v.findViewById(R.id.tvConnectionInitial)
+            val imgAvatar: android.widget.ImageView = v.findViewById(R.id.imgConnectionAvatar)
             val tvName: TextView          = v.findViewById(R.id.tvConnectionName)
             val tvRole: TextView          = v.findViewById(R.id.tvConnectionRole)
             val tvMutual: TextView        = v.findViewById(R.id.tvConnectionMutual)
@@ -214,18 +170,26 @@ class ConnectionsActivity : AppCompatActivity() {
             val name   = user["name"]?.toString() ?: "User"
             val role   = user["role"]?.toString() ?: ""
 
-            holder.tvInitial.text = name.firstOrNull()?.uppercase() ?: "U"
+            val imageUrl = user["profileImageUrl"]?.toString() ?: ""
+            if (imageUrl.isNotBlank()) {
+                holder.imgAvatar.visibility = View.VISIBLE
+                holder.tvInitial.visibility = View.GONE
+                Glide.with(holder.itemView.context).load(imageUrl).circleCrop().into(holder.imgAvatar)
+            } else {
+                holder.imgAvatar.visibility = View.GONE
+                holder.tvInitial.visibility = View.VISIBLE
+                holder.tvInitial.text = name.firstOrNull()?.uppercase() ?: "U"
+            }
+
             holder.tvName.text    = name
             holder.tvRole.text    = role
             holder.tvMutual.text  = ""
 
-            val isPending = user.containsKey("requestId")
-            if (isPending) {
-                holder.btnAction.text = "Accept"
-                holder.btnAction.setOnClickListener { onAction(uid, name, "accept") }
+            if (uid == currentUid) {
+                holder.btnAction.visibility = View.GONE
             } else {
-                holder.btnAction.text = if (uid == currentUid) "You" else "Message"
-                holder.btnAction.isEnabled = uid != currentUid
+                holder.btnAction.visibility = View.VISIBLE
+                holder.btnAction.text = "Message"
                 holder.btnAction.setOnClickListener { onAction(uid, name, "message") }
             }
 
